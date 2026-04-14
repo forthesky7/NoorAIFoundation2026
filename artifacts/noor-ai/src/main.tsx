@@ -1,6 +1,9 @@
 import { createRoot } from "react-dom/client";
+import { setAuthTokenGetter } from "@workspace/api-client-react";
 import App from "./App";
 import "./index.css";
+
+setAuthTokenGetter(() => localStorage.getItem("noor_token"));
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
