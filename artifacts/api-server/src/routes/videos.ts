@@ -36,11 +36,24 @@ router.get("/videos", authMiddleware, async (req: AuthRequest, res) => {
   }
 });
 
+function extractYouTubeId(input: string): string {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/,
+    /^([A-Za-z0-9_-]{11})$/,
+  ];
+  for (const pattern of patterns) {
+    const match = input.match(pattern);
+    if (match) return match[1];
+  }
+  return input;
+}
+
 router.post("/videos", authMiddleware, adminMiddleware, async (req: AuthRequest, res) => {
   try {
     const parsed = CreateVideoBody.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Invalid input" });
-    const { title, description, youtubeId, subject, grade, duration, thumbnailUrl } = parsed.data;
+    const { title, description, subject, grade, duration, thumbnailUrl } = parsed.data;
+    const youtubeId = extractYouTubeId(parsed.data.youtubeId);
     const [video] = await db.insert(videosTable).values({
       title, description: description || "", youtubeId, subject, grade, duration,
       thumbnailUrl: thumbnailUrl || `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`,

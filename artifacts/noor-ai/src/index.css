@@ -2,6 +2,23 @@
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
 
+/* Arabic + Latin font stack */
+:root {
+  --font-sans: 'IBM Plex Sans Arabic', 'Inter', system-ui, sans-serif;
+}
+
+[dir="ltr"] {
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+/* RTL logical property helpers */
+.ms-auto { margin-inline-start: auto; }
+.me-auto { margin-inline-end: auto; }
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

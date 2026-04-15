@@ -5,81 +5,73 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlayCircle, Search, FilterX } from "lucide-react";
+import { PlayCircle, Search, FilterX, MessageSquare } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
+import { useLang } from "@/lib/language";
 
 export default function Videos() {
+  const { t, lang } = useLang();
   const [search, setSearch] = useState("");
-  const [subject, setSubject] = useState<string>("all");
-  const [grade, setGrade] = useState<string>("all");
+  const [category, setCategory] = useState<string>("all");
 
   const { data: videos, isLoading } = useListVideos(
-    { 
-      subject: subject !== "all" ? subject : undefined,
-      grade: grade !== "all" ? grade : undefined
-    },
-    { query: { queryKey: getListVideosQueryKey({ subject: subject !== "all" ? subject : undefined, grade: grade !== "all" ? grade : undefined }) } }
+    {},
+    { query: { queryKey: getListVideosQueryKey() } }
   );
 
-  const filteredVideos = videos?.filter(v => 
-    v.title.toLowerCase().includes(search.toLowerCase()) || 
-    (v.description && v.description.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filteredVideos = videos?.filter(v => {
+    const matchSearch = v.title.toLowerCase().includes(search.toLowerCase()) ||
+      (v.description && v.description.toLowerCase().includes(search.toLowerCase()));
+    const matchCategory = category === "all" || v.subject === category;
+    return matchSearch && matchCategory;
+  });
 
-  const subjects = ["Math", "Science", "History", "English", "Programming", "Physics"];
-  const grades = ["9", "10", "11", "12", "College"];
+  const categories = [...new Set(videos?.map(v => v.subject) || [])].filter(Boolean);
 
   const clearFilters = () => {
     setSearch("");
-    setSubject("all");
-    setGrade("all");
+    setCategory("all");
   };
+
+  const hasFilters = search || category !== "all";
 
   return (
     <AppLayout>
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Video Library</h1>
-            <p className="text-muted-foreground mt-2">Interactive lessons with AI comprehension checks.</p>
+            <h1 className="text-3xl font-bold tracking-tight">{t.videoLibrary}</h1>
+            <p className="text-muted-foreground mt-2">{t.videoLibraryDesc}</p>
           </div>
         </div>
 
         <div className="bg-card border rounded-xl p-4 mb-8 shadow-sm flex flex-col md:flex-row gap-4 items-center">
           <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search lessons..." 
+            <Search className={`absolute ${lang === "ar" ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
+            <Input
+              placeholder={t.searchLessons}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+              className={lang === "ar" ? "pr-9 text-right" : "pl-9"}
             />
           </div>
-          
+
           <div className="flex w-full md:w-auto gap-4">
-            <Select value={subject} onValueChange={setSubject}>
-              <SelectTrigger className="w-full md:w-40">
-                <SelectValue placeholder="Subject" />
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="w-full md:w-44">
+                <SelectValue placeholder={t.allCategories} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Subjects</SelectItem>
-                {subjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                <SelectItem value="all">{t.allCategories}</SelectItem>
+                {categories.map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
-            <Select value={grade} onValueChange={setGrade}>
-              <SelectTrigger className="w-full md:w-32">
-                <SelectValue placeholder="Grade" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Grades</SelectItem>
-                {grades.map(g => <SelectItem key={g} value={g}>Grade {g}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            
-            {(search || subject !== "all" || grade !== "all") && (
-              <Button variant="ghost" size="icon" onClick={clearFilters} title="Clear filters">
+            {hasFilters && (
+              <Button variant="ghost" size="icon" onClick={clearFilters} title={t.clearFilters}>
                 <FilterX className="h-4 w-4" />
               </Button>
             )}
@@ -93,7 +85,7 @@ export default function Videos() {
                 <Skeleton className="w-full aspect-video rounded-xl" />
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-9 w-full rounded-lg" />
               </div>
             ))}
           </div>
@@ -112,29 +104,37 @@ export default function Videos() {
                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <PlayCircle className="h-16 w-16 text-white opacity-80" />
                   </div>
-                  <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded font-medium shadow-sm backdrop-blur-sm">
-                    {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
-                  </div>
                   {video.checkpointCount > 0 && (
-                    <div className="absolute top-2 right-2 bg-primary/90 text-primary-foreground text-xs px-2 py-1 rounded font-medium shadow-sm backdrop-blur-sm flex items-center gap-1">
+                    <div className="absolute top-2 end-2 bg-primary/90 text-primary-foreground text-xs px-2 py-1 rounded font-medium shadow-sm backdrop-blur-sm flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                      {video.checkpointCount} Checkpoints
+                      {video.checkpointCount}
                     </div>
                   )}
                 </Link>
-                <CardContent className="p-5 flex-1 flex flex-col">
-                  <div className="flex items-center gap-2 mb-3">
+                <CardContent className="p-5 flex-1 flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md">
                       {video.subject}
                     </span>
-                    <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-md">
-                      Grade {video.grade}
-                    </span>
                   </div>
                   <Link href={`/videos/${video.id}`} className="hover:underline">
-                    <h3 className="font-semibold text-lg line-clamp-2 mb-2 group-hover:text-primary transition-colors">{video.title}</h3>
+                    <h3 className="font-semibold text-lg line-clamp-2 group-hover:text-primary transition-colors">{video.title}</h3>
                   </Link>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mt-auto">{video.description}</p>
+                  {video.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-2">{video.description}</p>
+                  )}
+
+                  {/* AI Chat Button */}
+                  <Link href={`/videos/${video.id}`}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-auto gap-2 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary font-medium"
+                    >
+                      <MessageSquare className="h-4 w-4 shrink-0" />
+                      <span className="text-sm">{t.discussWithNoor}</span>
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             ))}
@@ -144,11 +144,9 @@ export default function Videos() {
             <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
               <Search className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">No videos found</h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              We couldn't find any lessons matching your current filters. Try adjusting your search terms or clearing the filters.
-            </p>
-            <Button onClick={clearFilters} variant="outline">Clear all filters</Button>
+            <h3 className="text-xl font-semibold mb-2">{t.noVideos}</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">{t.noVideosDesc}</p>
+            <Button onClick={clearFilters} variant="outline">{t.clearFilters}</Button>
           </div>
         )}
       </div>
