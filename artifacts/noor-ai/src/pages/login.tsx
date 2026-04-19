@@ -17,11 +17,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap } from "lucide-react";
+import { useLang } from "@/lib/language";
 
 const formSchema = z.object({
-  email: z.string().email("Please enter a valid email address."),
-  password: z.string().min(6, "Password must be at least 6 characters."),
+  email: z.string().email(),
+  password: z.string().min(6),
 });
 
 export default function Login() {
@@ -29,13 +29,11 @@ export default function Login() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const loginMutation = useLogin();
+  const { lang } = useLang();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: { email: "", password: "" },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
@@ -43,15 +41,15 @@ export default function Login() {
       onSuccess: (data) => {
         setToken(data.token);
         toast({
-          title: "Welcome back",
-          description: "You have successfully logged in.",
+          title: lang === "ar" ? "أهلاً بعودتك!" : "Welcome back!",
+          description: lang === "ar" ? "تم تسجيل الدخول بنجاح." : "You have successfully logged in.",
         });
         setLocation("/dashboard");
       },
       onError: (error: any) => {
         toast({
-          title: "Login failed",
-          description: error?.error || "Please check your credentials and try again.",
+          title: lang === "ar" ? "فشل تسجيل الدخول" : "Login failed",
+          description: error?.error || (lang === "ar" ? "تحقق من بياناتك وحاول مجدداً." : "Please check your credentials and try again."),
           variant: "destructive",
         });
       },
@@ -63,11 +61,18 @@ export default function Login() {
       <div className="flex-1 flex items-center justify-center p-4 bg-muted/30">
         <Card className="w-full max-w-md shadow-sm">
           <CardHeader className="space-y-3 items-center text-center">
-            <div className="h-12 w-12 bg-primary/10 text-primary rounded-full flex items-center justify-center">
-              <GraduationCap className="h-6 w-6" />
-            </div>
-            <CardTitle className="text-2xl">Log in to NOOR AI</CardTitle>
-            <CardDescription>Enter your credentials to access your account</CardDescription>
+            <img
+              src="/logo.jpg"
+              alt="نُور AI"
+              className="h-16 w-16 rounded-full object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+            />
+            <CardTitle className="text-2xl">
+              {lang === "ar" ? "تسجيل الدخول إلى نُور AI" : "Log in to NOOR AI"}
+            </CardTitle>
+            <CardDescription>
+              {lang === "ar" ? "أدخل بيانات حسابك للوصول إلى المنصة" : "Enter your credentials to access your account"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -77,9 +82,9 @@ export default function Login() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{lang === "ar" ? "البريد الإلكتروني" : "Email"}</FormLabel>
                       <FormControl>
-                        <Input placeholder="you@example.com" type="email" {...field} />
+                        <Input placeholder="you@example.com" type="email" dir="ltr" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -90,29 +95,31 @@ export default function Login() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel>{lang === "ar" ? "كلمة المرور" : "Password"}</FormLabel>
                       <FormControl>
-                        <Input placeholder="••••••••" type="password" {...field} />
+                        <Input placeholder="••••••••" type="password" dir="ltr" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button 
-                  type="submit" 
-                  className="w-full h-11" 
+                <Button
+                  type="submit"
+                  className="w-full h-11"
                   disabled={loginMutation.isPending}
                 >
-                  {loginMutation.isPending ? "Logging in..." : "Log in"}
+                  {loginMutation.isPending
+                    ? (lang === "ar" ? "جارٍ الدخول..." : "Logging in...")
+                    : (lang === "ar" ? "تسجيل الدخول" : "Log in")}
                 </Button>
               </form>
             </Form>
           </CardContent>
           <CardFooter className="justify-center">
             <p className="text-sm text-muted-foreground">
-              Don't have an account?{" "}
+              {lang === "ar" ? "ليس لديك حساب؟ " : "Don't have an account? "}
               <Link href="/register" className="text-primary hover:underline font-medium">
-                Sign up
+                {lang === "ar" ? "إنشاء حساب" : "Sign up"}
               </Link>
             </p>
           </CardFooter>

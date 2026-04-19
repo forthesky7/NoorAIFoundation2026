@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useLogout } from "@workspace/api-client-react";
-import { GraduationCap, LogOut, Menu, UserCircle, Languages } from "lucide-react";
+import { LogOut, Menu, UserCircle, Languages, Moon, Sun, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +20,9 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useLang } from "@/lib/language";
+import { useTheme } from "@/lib/theme";
+
+const OWNER_EMAIL = "forthesky7@gmail.com";
 
 export function Navbar() {
   const { user, isAuthenticated, setToken } = useAuth();
@@ -27,6 +30,7 @@ export function Navbar() {
   const { toast } = useToast();
   const logout = useLogout();
   const { t, toggle, lang } = useLang();
+  const { theme, toggleTheme } = useTheme();
 
   const handleLogout = () => {
     logout.mutate(undefined, {
@@ -37,6 +41,8 @@ export function Navbar() {
       },
     });
   };
+
+  const isOwner = user?.email === OWNER_EMAIL;
 
   const NavLinks = () => (
     <>
@@ -49,8 +55,9 @@ export function Navbar() {
       <Link href="/future" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
         {t.futureSimulator}
       </Link>
-      {user?.role === "admin" && (
-        <Link href="/admin-noor" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+      {isOwner && (
+        <Link href="/admin-noor" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
+          <Settings className="h-3.5 w-3.5" />
           {t.adminNoor}
         </Link>
       )}
@@ -62,8 +69,15 @@ export function Navbar() {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
-            <GraduationCap className="h-6 w-6 text-primary" />
-            <span className="font-semibold text-lg tracking-tight">نُور AI</span>
+            <img
+              src="/logo.jpg"
+              alt="نُور AI"
+              className="h-9 w-9 rounded-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+            <span className="font-semibold text-lg tracking-tight text-primary">نُور AI</span>
           </Link>
 
           {isAuthenticated && (
@@ -73,7 +87,18 @@ export function Navbar() {
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {/* Dark mode toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            className="rounded-full"
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+
           {/* Language Toggle */}
           <Button
             variant="ghost"
@@ -104,6 +129,11 @@ export function Navbar() {
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">{user?.name}</p>
                       <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                      {isOwner && (
+                        <span className="text-[10px] text-primary font-semibold mt-0.5">
+                          {lang === "ar" ? "المالك / المدير" : "Owner / Super Admin"}
+                        </span>
+                      )}
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -115,10 +145,24 @@ export function Navbar() {
                       <Link href="/subscribe">{lang === "ar" ? "الاشتراك" : "Subscription"}</Link>
                     </DropdownMenuItem>
                   )}
+                  {isOwner && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin-noor" className="flex items-center gap-2">
+                        <Settings className="h-4 w-4" />
+                        {t.adminNoor}
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={toggle} className="gap-2">
                     <Languages className="h-4 w-4" />
                     {t.langToggle}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={toggleTheme} className="gap-2">
+                    {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                    {theme === "dark"
+                      ? (lang === "ar" ? "الوضع النهاري" : "Light Mode")
+                      : (lang === "ar" ? "الوضع الليلي" : "Dark Mode")}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
@@ -136,15 +180,24 @@ export function Navbar() {
                       <span className="sr-only">{t.menu}</span>
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side={lang === "ar" ? "right" : "right"}>
+                  <SheetContent side="right">
                     <SheetHeader>
-                      <SheetTitle>{t.menu}</SheetTitle>
+                      <SheetTitle className="flex items-center gap-2">
+                        <img src="/logo.jpg" alt="نُور AI" className="h-7 w-7 rounded-full object-cover" />
+                        {t.menu}
+                      </SheetTitle>
                     </SheetHeader>
                     <div className="flex flex-col gap-4 mt-6">
                       <NavLinks />
                       <Button variant="ghost" size="sm" onClick={toggle} className="justify-start gap-2">
                         <Languages className="h-4 w-4" />
                         {t.langToggle}
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={toggleTheme} className="justify-start gap-2">
+                        {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                        {theme === "dark"
+                          ? (lang === "ar" ? "الوضع النهاري" : "Light Mode")
+                          : (lang === "ar" ? "الوضع الليلي" : "Dark Mode")}
                       </Button>
                       {!user?.subscribed && user?.role !== "admin" && (
                         <Button variant="default" className="mt-4" asChild>

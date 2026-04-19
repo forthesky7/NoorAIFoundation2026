@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 import { LangProvider } from "@/lib/language";
+import { ThemeProvider } from "@/lib/theme";
 
 import Home from "@/pages/home";
 import Login from "@/pages/login";
@@ -17,9 +18,19 @@ import AdminPanel from "@/pages/admin/index";
 import AdminNoor from "@/pages/admin-noor/index";
 import NotFound from "@/pages/not-found";
 
+const OWNER_EMAIL = "forthesky7@gmail.com";
+
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ component: Component, adminOnly = false }: { component: React.ComponentType<any>, adminOnly?: boolean }) {
+function ProtectedRoute({
+  component: Component,
+  adminOnly = false,
+  ownerOnly = false,
+}: {
+  component: React.ComponentType<any>;
+  adminOnly?: boolean;
+  ownerOnly?: boolean;
+}) {
   const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
@@ -28,6 +39,10 @@ function ProtectedRoute({ component: Component, adminOnly = false }: { component
 
   if (!isAuthenticated) {
     return <Redirect to="/login" />;
+  }
+
+  if (ownerOnly && user?.email !== OWNER_EMAIL) {
+    return <Redirect to="/dashboard" />;
   }
 
   if (adminOnly && user?.role !== "admin") {
@@ -50,7 +65,7 @@ function Router() {
       <Route path="/future"><ProtectedRoute component={FutureSimulator} /></Route>
       <Route path="/subscribe"><ProtectedRoute component={Subscribe} /></Route>
       <Route path="/admin"><ProtectedRoute component={AdminPanel} adminOnly={true} /></Route>
-      <Route path="/admin-noor"><ProtectedRoute component={AdminNoor} adminOnly={true} /></Route>
+      <Route path="/admin-noor"><ProtectedRoute component={AdminNoor} ownerOnly={true} /></Route>
 
       <Route component={NotFound} />
     </Switch>
@@ -60,14 +75,16 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <LangProvider>
-        <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
-      </LangProvider>
+      <ThemeProvider>
+        <LangProvider>
+          <TooltipProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <Router />
+            </WouterRouter>
+            <Toaster />
+          </TooltipProvider>
+        </LangProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
