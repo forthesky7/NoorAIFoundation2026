@@ -15,8 +15,8 @@ export const translations = {
     signUp: "إنشاء حساب",
     searchLessons: "ابحث عن الدروس...",
     videoLibrary: "مكتبة الفيديوهات",
-    videoLibraryDesc: "دروس تفاعلية مع نقاط تحقق بالذكاء الاصطناعي.",
-    discussWithNoor: "ناقش الدرس مع نُور AI",
+    videoLibraryDesc: "تصفح جميع الدروس مجاناً — فقط التشغيل والمعلم الذكي للمشتركين.",
+    discussWithNoor: "ناقش الدرس مع نُور AI - أو اسأل مساعد الأستاذ الذكي",
     allCategories: "جميع الفئات",
     noVideos: "لم يتم العثور على فيديوهات",
     noVideosDesc: "لم نجد أي دروس تطابق بحثك. حاول تعديل البحث أو مسح الفلاتر.",
@@ -62,6 +62,24 @@ export const translations = {
     features: "المميزات",
     joinNoor: "انضم إلى نُور AI",
     menu: "القائمة",
+    videosWatched: "فيديوهات تمت مشاهدتها",
+    completedFully: "مكتملة بالكامل",
+    timeLearned: "وقت التعلم",
+    totalStudyTime: "إجمالي وقت الدراسة",
+    currentStreak: "السلسلة الحالية",
+    days: "أيام",
+    keepItUp: "أحسنت! واصل!",
+    subscription: "الاشتراك",
+    active: "نشط",
+    freeTier: "مجاني",
+    upgradePremium: "ترقية إلى Premium",
+    recentVideos: "الدروس الأخيرة",
+    viewLibrary: "عرض المكتبة",
+    noVideosWatched: "لم تشاهد أي دروس بعد",
+    exploreLibrary: "استكشف المكتبة",
+    startJourney: "ابدأ رحلتك التعليمية باستكشاف مكتبة الفيديوهات. سنتتبع تقدمك هنا.",
+    continueBtn: "متابعة المشاهدة",
+    refreshNotice: "يرجى تحديث الصفحة (Refresh) لرؤية أحدث الدروس والتحديثات",
   },
   en: {
     dashboard: "Dashboard",
@@ -75,8 +93,8 @@ export const translations = {
     signUp: "Sign up",
     searchLessons: "Search lessons...",
     videoLibrary: "Video Library",
-    videoLibraryDesc: "Interactive lessons with AI comprehension checks.",
-    discussWithNoor: "ناقش الدرس مع نُور AI",
+    videoLibraryDesc: "Browse all lessons freely — only Play & AI Tutor require subscription.",
+    discussWithNoor: "Discuss with NOOR AI - or Ask the Smart Teacher",
     allCategories: "All Categories",
     noVideos: "No videos found",
     noVideosDesc: "We couldn't find any lessons matching your filters. Try adjusting your search or clearing filters.",
@@ -122,8 +140,39 @@ export const translations = {
     features: "Features",
     joinNoor: "Join NOOR AI",
     menu: "Menu",
+    videosWatched: "Videos Watched",
+    completedFully: "completed fully",
+    timeLearned: "Time Learned",
+    totalStudyTime: "Total study time",
+    currentStreak: "Current Streak",
+    days: "days",
+    keepItUp: "Keep it up!",
+    subscription: "Subscription",
+    active: "Active",
+    freeTier: "Free Tier",
+    upgradePremium: "Upgrade to Premium",
+    recentVideos: "Recent Videos",
+    viewLibrary: "View Library",
+    noVideosWatched: "No videos watched yet",
+    exploreLibrary: "Explore Library",
+    startJourney: "Start your learning journey by exploring our video library. We'll track your progress here.",
+    continueBtn: "Continue Watching",
+    refreshNotice: "Please refresh the page to see the latest lessons and updates",
   }
 };
+
+export const DEFAULT_CATEGORIES = [
+  { value: "Qudurat", labelAr: "قدرات", labelEn: "Qudurat" },
+  { value: "Tahsili", labelAr: "تحصيلي", labelEn: "Tahsili" },
+  { value: "Secondary", labelAr: "ثانوي - مسارات", labelEn: "Secondary - Tracks" },
+  { value: "General", labelAr: "عام", labelEn: "General" },
+];
+
+export function getCategoryLabel(value: string, lang: "ar" | "en"): string {
+  const cat = DEFAULT_CATEGORIES.find(c => c.value === value);
+  if (cat) return lang === "ar" ? cat.labelAr : cat.labelEn;
+  return value;
+}
 
 interface LangContextType {
   lang: Lang;

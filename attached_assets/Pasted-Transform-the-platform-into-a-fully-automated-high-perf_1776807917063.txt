@@ -1,0 +1,42 @@
+Transform the platform into a fully automated, high-performance, and culturally aligned educational experience for the Gulf region. Every feature must match the landing page promises.
+
+1. GULF REGION SPECIALIZATION & UI:
+- FULL ARABIC OVERHAUL: Force RTL (Right-to-Left) across all pages. Every button, menu, and description (Dashboard, Admin, Login, Profile) must be in professional Arabic.
+- CATEGORY CLEANUP: Remove 'بكالوريا الجزائر' entirely. Set default categories to: (قدرات، تحصيلي، ثانوي - مسارات، عام).
+- DYNAMIC MANAGEMENT: Add a 'Manage Categories' section in the Admin Panel to Add/Edit/Delete categories manually.
+
+2. THE MAGNETIC FUTURE SIMULATOR (CORE FEATURE):
+- SOPHISTICATED INPUT: Add questions for 'Approximate Grades' and 'Desired Living Standard'.
+- VISIONARY OUTPUT: Results must be 100% Arabic, including:
+  - A visual 4-stage roadmap.
+  - Financial Projection: Estimated salary and job title in 5 years.
+  - Emotional & Visionary tone (e.g., 'مسارك نحو السيادة المادية').
+- EXPORT: Ensure 'PDF Export' generates a clean, formatted Arabic file.
+
+3. SMART PLAYER & AI TUTOR:
+- NO REDIRECTS: Embed all YouTube videos inside the platform.
+- SMART STOP (Socratic Method): Implement logic to pause videos at key timestamps. The AI Tutor must pop up to ask guiding questions (Ask, don't tell).
+- INTERACTION: Update AI button text to: 'ناقش الدرس مع نُور AI - أو اسأل مساعد الأستاذ الذكي'.
+
+4. AUTOMATED GLOBAL PAYMENTS:
+- DUAL GATEWAY: Fully integrate Automated Card Payments (Stripe/Lemon Squeezy API) and Crypto (NOWPayments).
+- AUTO-ACTIVATION: Once payment is confirmed via Webhook, the user's status must switch to 'Premium' automatically.
+- TRANSPARENT ACCESS: Allow users to browse categories and video titles BEFORE paying. Lock the 'Play', 'AI Tutor', and 'Simulator' behind the $5 paywall.
+- FIX UI: Correct the distorted NOWPayments QR code and update the Card payment text to reflect instant activation.
+
+5. ADMIN PANEL & FEEDBACK TOOLS:
+- SEARCH & CONTROL: Add a 'User Search' bar and a 'Manual Activate' button next to each student's name for manual overrides.
+- SUGGESTION SYSTEM: Add a 'Request Teacher/Video' form in the Library. 
+- EMPTY STATE: If a search is empty, show: 'تم تسجيل طلبك لمسار (X) بنجاح. فريق نُور يعمل على توفير المصادر، وسيتم إخطارك عند توفره'.
+- TELEGRAM LINK: Add a field in the Admin Panel to update the 'Telegram Community Link' globally.
+
+6. PERFORMANCE, PRIVACY & SECURITY:
+- LOCAL PRIVACY: Use LocalStorage for student-AI chat history to ensure privacy and speed.
+- SCALABILITY: Optimize the database for high concurrent traffic. 
+- REFRESH NOTICE: Add a notice on the Dashboard: 'يرجى تحديث الصفحة (Refresh) لرؤية أحدث الدروس والتحديثات'.
+
+7. TESTING MODE:
+- Implement a hidden Promo Code field. The code 'NOOR_ADMIN_TEST' must grant 100% discount and instant Premium access for testing.
+
+DEPLOYMENT:
+Sync all changes to the Production URL immediately. The platform must be 100% Arabic, 100% Automated, and 100% functional.

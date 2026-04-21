@@ -4,322 +4,372 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/hooks/use-auth";
 import { useLang } from "@/lib/language";
 import { useGenerateCareerRoadmap } from "@workspace/api-client-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Brain, ArrowRight, Compass, CheckCircle2, ChevronRight, Briefcase, Lock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Sparkles, GraduationCap, Briefcase, Trophy, Lock, Download, BanknoteIcon, TrendingUp } from "lucide-react";
 
-function FuturePaywall({ lang }: { lang: string }) {
-  return (
-    <AppLayout>
-      <div className="container mx-auto px-4 py-20 max-w-xl text-center">
-        <div className="mx-auto w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 text-primary">
-          <Lock className="h-10 w-10" />
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight mb-3">
-          {lang === "ar" ? "محاكي المستقبل" : "Future Simulator"}
-        </h1>
-        <p className="text-muted-foreground mb-2 text-lg">
-          {lang === "ar" ? "ميزة مميزة حصرية للمشتركين" : "Premium Feature — Subscribers Only"}
-        </p>
-        <p className="text-muted-foreground mb-8 text-sm">
-          {lang === "ar"
-            ? "اشترك بـ 5 دولار شهرياً فقط للوصول إلى محاكي المستقبل ومعلم الذكاء الاصطناعي وجميع مميزات المنصة."
-            : "Subscribe for just $5/month to access the Future Simulator, AI Tutor, and all platform features."}
-        </p>
-        <Button size="lg" asChild className="px-10">
-          <Link href="/subscribe">
-            {lang === "ar" ? "اشترك الآن بـ 5$/شهر" : "Subscribe Now — $5/month"}
-          </Link>
-        </Button>
-        <div className="mt-6">
-          <Button variant="ghost" asChild>
-            <Link href="/videos">
-              {lang === "ar" ? "تصفح الدروس المجانية" : "Browse Free Lessons"}
-            </Link>
-          </Button>
-        </div>
-      </div>
-    </AppLayout>
-  );
-}
+const arabicInterests = [
+  { value: "تكنولوجيا", label: "💻 التكنولوجيا والبرمجة" },
+  { value: "ذكاء", label: "🤖 الذكاء الاصطناعي" },
+  { value: "طب", label: "🏥 الطب والصحة" },
+  { value: "رياضيات", label: "📐 الرياضيات والإحصاء" },
+  { value: "علوم", label: "🔬 العلوم والبحث" },
+  { value: "أعمال", label: "💼 الأعمال وريادة الأعمال" },
+  { value: "تصميم", label: "🎨 التصميم والإبداع" },
+  { value: "قانون", label: "⚖️ القانون والعدالة" },
+];
+
+const englishInterests = [
+  { value: "تكنولوجيا", label: "💻 Technology & Programming" },
+  { value: "ذكاء", label: "🤖 Artificial Intelligence" },
+  { value: "طب", label: "🏥 Medicine & Healthcare" },
+  { value: "رياضيات", label: "📐 Math & Statistics" },
+  { value: "علوم", label: "🔬 Science & Research" },
+  { value: "أعمال", label: "💼 Business & Entrepreneurship" },
+  { value: "تصميم", label: "🎨 Design & Creativity" },
+  { value: "قانون", label: "⚖️ Law & Justice" },
+];
+
+const gradeLevels = [
+  { value: "الصف التاسع", label: "الصف التاسع (متوسط 3)" },
+  { value: "الصف العاشر", label: "الصف العاشر (أول ثانوي)" },
+  { value: "الصف الحادي عشر", label: "الصف الحادي عشر (ثاني ثانوي)" },
+  { value: "الصف الثاني عشر", label: "الصف الثاني عشر (ثالث ثانوي)" },
+  { value: "طالب جامعي", label: "طالب جامعي" },
+  { value: "خريج", label: "خريج جامعي" },
+];
+
+const approxGrades = [
+  { value: "ممتاز (90-100%)", label: "ممتاز (90-100%)" },
+  { value: "جيد جداً (80-89%)", label: "جيد جداً (80-89%)" },
+  { value: "جيد (70-79%)", label: "جيد (70-79%)" },
+  { value: "مقبول (60-69%)", label: "مقبول (60-69%)" },
+  { value: "أقل من المتوسط", label: "أقل من المتوسط" },
+];
+
+const livingStandards = [
+  { value: "راحة مادية عالية جداً", label: "💎 راحة مادية عالية جداً" },
+  { value: "حياة مريحة ومستقرة", label: "✅ حياة مريحة ومستقرة" },
+  { value: "اكتفاء وأمان أساسي", label: "🏠 اكتفاء وأمان أساسي" },
+  { value: "التركيز على التأثير لا المال", label: "🌱 التركيز على التأثير لا المال" },
+];
+
+const phaseIcons = [
+  <GraduationCap key="g" className="h-6 w-6" />,
+  <Sparkles key="s" className="h-6 w-6" />,
+  <Briefcase key="b" className="h-6 w-6" />,
+  <Trophy key="t" className="h-6 w-6" />,
+];
+
+const phaseColors = [
+  "border-blue-400/50 bg-blue-50 dark:bg-blue-950/20",
+  "border-violet-400/50 bg-violet-50 dark:bg-violet-950/20",
+  "border-amber-400/50 bg-amber-50 dark:bg-amber-950/20",
+  "border-green-400/50 bg-green-50 dark:bg-green-950/20",
+];
+
+const phaseAccents = [
+  "bg-blue-500 text-white",
+  "bg-violet-500 text-white",
+  "bg-amber-500 text-white",
+  "bg-green-500 text-white",
+];
 
 export default function FutureSimulator() {
   const { user } = useAuth();
   const { lang } = useLang();
   const isSubscribed = user?.subscribed || user?.role === "admin";
+  const roadmapMutation = useGenerateCareerRoadmap();
+  const [roadmap, setRoadmap] = useState<any>(null);
 
-  const [step, setStep] = useState(1);
-  const [interests, setInterests] = useState("");
-  const [grade, setGrade] = useState("");
-  const [goals, setGoals] = useState("");
+  const [selectedInterest, setSelectedInterest] = useState<string>("");
+  const [currentGrade, setCurrentGrade] = useState<string>("");
+  const [approxGrade, setApproxGrade] = useState<string>("");
+  const [livingStandard, setLivingStandard] = useState<string>("");
+  const [goals, setGoals] = useState<string>("");
 
-  const generateRoadmap = useGenerateCareerRoadmap();
-  const roadmap = generateRoadmap.data;
+  const interests = lang === "ar" ? arabicInterests : englishInterests;
+
+  const handleGenerate = () => {
+    if (!selectedInterest || !currentGrade) return;
+    const enrichedGoals = [
+      goals,
+      approxGrade ? `مستوى الدراسة: ${approxGrade}` : "",
+      livingStandard ? `المستوى المعيشي المرغوب: ${livingStandard}` : "",
+    ].filter(Boolean).join(". ");
+
+    roadmapMutation.mutate(
+      { data: { interests: [selectedInterest], currentGrade, goals: enrichedGoals } },
+      { onSuccess: (data) => setRoadmap(data) }
+    );
+  };
+
+  const handlePrint = () => window.print();
 
   if (!isSubscribed) {
-    return <FuturePaywall lang={lang} />;
+    return (
+      <AppLayout>
+        <div className="container mx-auto px-4 py-24 max-w-2xl text-center">
+          <div className="bg-primary/5 border border-primary/20 rounded-3xl p-12">
+            <Lock className="h-16 w-16 text-primary mx-auto mb-6 opacity-70" />
+            <h1 className="text-3xl font-bold mb-4">
+              {lang === "ar" ? "محاكي المستقبل" : "Future Simulator"}
+            </h1>
+            <p className="text-muted-foreground text-lg mb-8">
+              {lang === "ar"
+                ? "اكتشف مسارك المهني وتوقعات راتبك وخارطة طريقك نحو النجاح — حصرياً للمشتركين."
+                : "Discover your career path, salary projections, and roadmap to success — subscribers only."}
+            </p>
+            <Button size="lg" asChild>
+              <Link href="/subscribe">
+                {lang === "ar" ? "اشترك وافتح المحاكي" : "Subscribe to Unlock"}
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </AppLayout>
+    );
   }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (step < 3) {
-      setStep(step + 1);
-    } else {
-      const interestsArray = interests.split(",").map(i => i.trim()).filter(i => i);
-      generateRoadmap.mutate({ data: { interests: interestsArray, currentGrade: grade, goals } });
-    }
-  };
-
-  const isFormComplete = () => {
-    if (step === 1) return interests.trim().length > 0;
-    if (step === 2) return grade !== "";
-    if (step === 3) return goals.trim().length > 0;
-    return false;
-  };
 
   return (
     <AppLayout>
-      <div className="container mx-auto px-4 py-12 max-w-5xl">
+      <div className="container mx-auto px-4 py-10 max-w-4xl">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+            <Sparkles className="h-4 w-4" />
+            {lang === "ar" ? "مدعوم بالذكاء الاصطناعي" : "Powered by AI"}
+          </div>
+          <h1 className="text-4xl font-bold tracking-tight mb-3">
+            {lang === "ar" ? "محاكي المستقبل" : "Future Simulator"}
+          </h1>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            {lang === "ar"
+              ? "أجب على أربعة أسئلة وسيرسم لك نُور AI خارطة طريق مخصصة لمستقبلك المهني مع توقعات مالية حقيقية."
+              : "Answer four questions and NOOR AI will draw your personalized career roadmap with real financial projections."}
+          </p>
+        </div>
 
-        {!roadmap && !generateRoadmap.isPending && (
-          <div className="max-w-2xl mx-auto">
-            <div className="text-center mb-10">
-              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 text-primary">
-                <Compass className="h-8 w-8" />
+        {!roadmap ? (
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle>
+                {lang === "ar" ? "أخبرنا عنك" : "Tell us about yourself"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-7">
+              {/* Q1 — Interest */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">
+                  {lang === "ar" ? "١. ما المجال الذي يشعل شغفك؟" : "1. What field excites you most?"}
+                </Label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {interests.map(interest => (
+                    <button
+                      key={interest.value}
+                      onClick={() => setSelectedInterest(interest.value)}
+                      className={`p-3 rounded-xl border text-sm font-medium transition-all text-center ${
+                        selectedInterest === interest.value
+                          ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/30"
+                          : "border-border hover:border-primary/40 hover:bg-muted"
+                      }`}
+                    >
+                      {interest.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <h1 className="text-4xl font-bold tracking-tight mb-4">
-                {lang === "ar" ? "محاكي المستقبل" : "Future Simulator"}
-              </h1>
-              <p className="text-xl text-muted-foreground">
-                {lang === "ar"
-                  ? "أخبرنا باهتماماتك وسنضع لك خارطة طريق دقيقة لتحقيق أهدافك."
-                  : "Tell us what you care about. We'll generate a precise roadmap to get you there."}
-              </p>
-            </div>
 
-            <Card className="border shadow-lg shadow-primary/5">
-              <div className="h-2 w-full bg-secondary flex">
-                <div className="h-full bg-primary transition-all duration-500 ease-in-out" style={{ width: `${(step / 3) * 100}%` }} />
+              {/* Q2 — Grade Level */}
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">
+                  {lang === "ar" ? "٢. ما مرحلتك الدراسية الحالية؟" : "2. What is your current academic level?"}
+                </Label>
+                <Select value={currentGrade} onValueChange={setCurrentGrade}>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder={lang === "ar" ? "اختر مرحلتك..." : "Select level..."} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {gradeLevels.map(g => (
+                      <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <CardContent className="p-8">
-                <form onSubmit={handleSubmit}>
-                  {step === 1 && (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
-                      <div className="space-y-2">
-                        <h2 className="text-2xl font-semibold tracking-tight">
-                          {lang === "ar" ? "ما الذي يثير اهتمامك؟" : "What are you interested in?"}
-                        </h2>
-                        <p className="text-muted-foreground">
-                          {lang === "ar" ? "أدخل مواضيع أو هوايات أو مجالات تستمتع بها." : "Enter topics, hobbies, or fields you enjoy."}
-                        </p>
-                      </div>
-                      <div className="space-y-3">
-                        <Label htmlFor="interests">
-                          {lang === "ar" ? "الاهتمامات (مفصولة بفواصل)" : "Interests (comma separated)"}
-                        </Label>
-                        <Input
-                          id="interests"
-                          placeholder={lang === "ar" ? "مثال: الذكاء الاصطناعي، الفضاء، ريادة الأعمال" : "e.g. artificial intelligence, space, business"}
-                          value={interests}
-                          onChange={(e) => setInterests(e.target.value)}
-                          autoFocus
-                          className="h-12 text-lg"
-                        />
-                      </div>
-                    </div>
-                  )}
 
-                  {step === 2 && (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
-                      <div className="space-y-2">
-                        <h2 className="text-2xl font-semibold tracking-tight">
-                          {lang === "ar" ? "من أين تبدأ؟" : "Where are you starting from?"}
-                        </h2>
-                        <p className="text-muted-foreground">
-                          {lang === "ar" ? "حدد مرحلتك الدراسية الحالية." : "Select your current educational stage."}
-                        </p>
-                      </div>
-                      <div className="space-y-3">
-                        <Label>{lang === "ar" ? "المرحلة الدراسية" : "Current Grade / Level"}</Label>
-                        <Select value={grade} onValueChange={setGrade}>
-                          <SelectTrigger className="h-12 text-lg">
-                            <SelectValue placeholder={lang === "ar" ? "اختر المرحلة" : "Select your grade"} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Middle School">{lang === "ar" ? "المتوسطة" : "Middle School"}</SelectItem>
-                            <SelectItem value="High School Freshman">{lang === "ar" ? "الأول ثانوي" : "High School Freshman"}</SelectItem>
-                            <SelectItem value="High School Sophomore">{lang === "ar" ? "الثاني ثانوي" : "High School Sophomore"}</SelectItem>
-                            <SelectItem value="High School Junior">{lang === "ar" ? "الثالث ثانوي" : "High School Junior"}</SelectItem>
-                            <SelectItem value="High School Senior">{lang === "ar" ? "الصف الأخير" : "High School Senior"}</SelectItem>
-                            <SelectItem value="College Freshman">{lang === "ar" ? "أولى جامعة" : "College Freshman"}</SelectItem>
-                            <SelectItem value="College/University">{lang === "ar" ? "الجامعة" : "College/University"}</SelectItem>
-                            <SelectItem value="Post-grad/Professional">{lang === "ar" ? "دراسات عليا / محترف" : "Professional / Post-grad"}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  )}
+              {/* Q3 — Approximate Grades */}
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">
+                  {lang === "ar" ? "٣. كيف تصف مستوى درجاتك التقريبي؟" : "3. How would you describe your approximate grades?"}
+                </Label>
+                <Select value={approxGrade} onValueChange={setApproxGrade}>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder={lang === "ar" ? "اختر مستوى درجاتك..." : "Select grade level..."} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {approxGrades.map(g => (
+                      <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                  {step === 3 && (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
-                      <div className="space-y-2">
-                        <h2 className="text-2xl font-semibold tracking-tight">
-                          {lang === "ar" ? "ما هو حلمك؟" : "What's the dream?"}
-                        </h2>
-                        <p className="text-muted-foreground">
-                          {lang === "ar" ? "صف هدفك النهائي، حتى لو كان غير واضح تماماً." : "Describe your ultimate goal, even if it's vague."}
-                        </p>
-                      </div>
-                      <div className="space-y-3">
-                        <Label htmlFor="goals">{lang === "ar" ? "أهدافك" : "Your Goals"}</Label>
-                        <Textarea
-                          id="goals"
-                          placeholder={lang === "ar"
-                            ? "أريد بناء روبوتات تساعد الناس، أو ربما بدء شركة تقنية..."
-                            : "I want to build robots that help people, or maybe start my own tech company..."}
-                          value={goals}
-                          onChange={(e) => setGoals(e.target.value)}
-                          className="min-h-[120px] resize-none text-base p-4"
-                          autoFocus
-                        />
-                      </div>
-                    </div>
-                  )}
+              {/* Q4 — Living Standard */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">
+                  {lang === "ar" ? "٤. ما المستوى المعيشي الذي تطمح إليه؟" : "4. What living standard do you aspire to?"}
+                </Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {livingStandards.map(ls => (
+                    <button
+                      key={ls.value}
+                      onClick={() => setLivingStandard(ls.value)}
+                      className={`p-3 rounded-xl border text-sm font-medium transition-all text-start ${
+                        livingStandard === ls.value
+                          ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/30"
+                          : "border-border hover:border-primary/40 hover:bg-muted"
+                      }`}
+                    >
+                      {ls.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                  <div className="flex justify-between items-center mt-10 pt-6 border-t">
-                    {step > 1 ? (
-                      <Button type="button" variant="ghost" onClick={() => setStep(step - 1)}>
-                        {lang === "ar" ? "رجوع" : "Back"}
-                      </Button>
-                    ) : <div></div>}
-                    <Button type="submit" size="lg" disabled={!isFormComplete()} className="px-8">
-                      {step < 3 ? (
-                        <>{lang === "ar" ? "التالي" : "Next"} <ArrowRight className="ms-2 h-4 w-4" /></>
-                      ) : (
-                        <>{lang === "ar" ? "توليد خارطة الطريق" : "Generate Roadmap"} <Brain className="ms-2 h-4 w-4" /></>
-                      )}
-                    </Button>
-                  </div>
-                </form>
+              {/* Optional Goals */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-muted-foreground">
+                  {lang === "ar" ? "هل لديك هدف محدد؟ (اختياري)" : "Do you have a specific goal? (optional)"}
+                </Label>
+                <Textarea
+                  placeholder={lang === "ar"
+                    ? "مثال: أريد أن أكون مهندس ذكاء اصطناعي وأعمل في شركة عالمية بحلول 2030..."
+                    : "E.g. I want to be an AI engineer working at a global company by 2030..."}
+                  value={goals}
+                  onChange={e => setGoals(e.target.value)}
+                  className="min-h-[80px] resize-none"
+                />
+              </div>
+
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={handleGenerate}
+                disabled={!selectedInterest || !currentGrade || roadmapMutation.isPending}
+              >
+                {roadmapMutation.isPending ? (
+                  <><Loader2 className="h-5 w-5 animate-spin me-2" />{lang === "ar" ? "نُور يحلل مسارك..." : "NOOR is analyzing..."}</>
+                ) : (
+                  <><Sparkles className="h-5 w-5 me-2" />{lang === "ar" ? "ارسم لي مستقبلي" : "Generate My Roadmap"}</>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+            {/* Roadmap Header */}
+            <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-background shadow-sm">
+              <CardContent className="p-8 text-center">
+                <div className="text-5xl mb-4">✨</div>
+                <h2 className="text-3xl font-extrabold tracking-tight mb-3">{roadmap.title}</h2>
+                <p className="text-muted-foreground max-w-2xl mx-auto text-base leading-relaxed">{roadmap.summary}</p>
+                <div className="flex flex-wrap justify-center gap-3 mt-6">
+                  {roadmap.topCareers?.map((career: string, i: number) => (
+                    <Badge key={i} variant="secondary" className="text-sm px-3 py-1">{career}</Badge>
+                  ))}
+                </div>
               </CardContent>
             </Card>
-          </div>
-        )}
 
-        {generateRoadmap.isPending && (
-          <div className="flex flex-col items-center justify-center py-32 space-y-6">
-            <div className="relative">
-              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse"></div>
-              <Brain className="h-16 w-16 text-primary relative animate-bounce" style={{ animationDuration: '2s' }} />
-            </div>
-            <div className="text-center">
-              <h2 className="text-2xl font-bold tracking-tight">
-                {lang === "ar" ? "جارٍ تحليل مستقبلك..." : "Synthesizing Your Future"}
-              </h2>
-              <p className="text-muted-foreground mt-2">
-                {lang === "ar" ? "تحليل ملايين المسارات المهنية..." : "Analyzing billions of career pathways..."}
-              </p>
-            </div>
-          </div>
-        )}
+            {/* Financial Projection */}
+            {roadmap.financialProjection && (
+              <Card className="border-green-500/30 bg-green-50 dark:bg-green-950/20 shadow-sm">
+                <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-6">
+                  <div className="bg-green-500 text-white rounded-full p-4 shrink-0">
+                    <BanknoteIcon className="h-8 w-8" />
+                  </div>
+                  <div className="text-center sm:text-start flex-1">
+                    <p className="text-sm font-medium text-green-700 dark:text-green-400 mb-1">
+                      {lang === "ar" ? "التوقع المالي خلال 5 سنوات" : "Financial Projection in 5 Years"}
+                    </p>
+                    <p className="text-2xl font-extrabold text-green-900 dark:text-green-200 mb-1">
+                      {roadmap.financialProjection.estimatedSalary}
+                    </p>
+                    <p className="text-base font-semibold text-green-800 dark:text-green-300">
+                      {roadmap.financialProjection.jobTitle}
+                    </p>
+                  </div>
+                  <TrendingUp className="h-12 w-12 text-green-400 shrink-0" />
+                </CardContent>
+              </Card>
+            )}
 
-        {roadmap && (
-          <div className="animate-in fade-in zoom-in-95 duration-500">
-            <div className="text-center mb-12">
-              <h1 className="text-4xl font-bold tracking-tight mb-4">{roadmap.title}</h1>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">{roadmap.summary}</p>
+            {/* 4-Stage Visual Roadmap */}
+            <div>
+              <h3 className="text-xl font-bold mb-5 flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                {lang === "ar" ? "خارطة الطريق المرحلية" : "Phased Roadmap"}
+              </h3>
+              <div className="space-y-5">
+                {roadmap.steps?.map((step: any, i: number) => (
+                  <Card key={i} className={`border-2 ${phaseColors[i] || ""} shadow-sm`}>
+                    <CardContent className="p-5 sm:p-6 flex gap-4 sm:gap-6">
+                      <div className={`${phaseAccents[i] || ""} rounded-full h-12 w-12 flex items-center justify-center shrink-0 shadow`}>
+                        {phaseIcons[i]}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-3 mb-2">
+                          <h4 className="font-bold text-lg">{step.title}</h4>
+                          <Badge variant="outline" className="text-xs">{step.duration}</Badge>
+                        </div>
+                        <p className="text-muted-foreground text-sm mb-4 leading-relaxed">{step.description}</p>
+                        <ul className="space-y-2">
+                          {step.milestones?.map((m: string, j: number) => (
+                            <li key={j} className="flex items-start gap-2 text-sm">
+                              <span className={`rounded-full h-5 w-5 flex items-center justify-center text-xs shrink-0 mt-0.5 ${phaseAccents[i] || ""}`}>
+                                {j + 1}
+                              </span>
+                              <span>{m}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8 mb-16">
-              <Card className="md:col-span-2 border shadow-sm">
+            {/* Recommended Subjects */}
+            {roadmap.recommendedSubjects?.length > 0 && (
+              <Card className="shadow-sm">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Compass className="h-5 w-5 text-primary" />
-                    {lang === "ar" ? "خارطة الطريق الكاملة" : "The Master Plan"}
+                  <CardTitle className="text-lg">
+                    {lang === "ar" ? "📚 المواد المُوصى بها" : "📚 Recommended Subjects"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="relative space-y-0 pl-4 before:absolute before:inset-y-0 before:left-6 before:w-0.5 before:bg-border">
-                    {roadmap.steps.map((step, idx) => (
-                      <div key={idx} className="relative pl-8 pb-10 last:pb-0">
-                        <div className="absolute left-[-11px] top-1 h-6 w-6 rounded-full border-4 border-background bg-primary" />
-                        <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 mb-2">
-                          <h3 className="text-xl font-semibold tracking-tight">{step.title}</h3>
-                          <span className="text-sm font-medium text-muted-foreground bg-secondary px-2 py-0.5 rounded-md w-fit">
-                            {lang === "ar" ? "المرحلة" : "Phase"} {step.phase} • {step.duration}
-                          </span>
-                        </div>
-                        <p className="text-muted-foreground mb-4">{step.description}</p>
-                        <div className="bg-secondary/50 rounded-xl p-4 border border-border/50">
-                          <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            {lang === "ar" ? "الإنجازات الرئيسية" : "Key Milestones"}
-                          </h4>
-                          <ul className="space-y-2">
-                            {step.milestones.map((milestone, mIdx) => (
-                              <li key={mIdx} className="text-sm flex items-start gap-2">
-                                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                                <span>{milestone}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
+                  <div className="flex flex-wrap gap-2">
+                    {roadmap.recommendedSubjects.map((s: string, i: number) => (
+                      <Badge key={i} variant="outline" className="text-sm px-3 py-1.5">{s}</Badge>
                     ))}
                   </div>
                 </CardContent>
               </Card>
+            )}
 
-              <div className="space-y-6">
-                <Card className="border shadow-sm">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Briefcase className="h-5 w-5 text-primary" />
-                      {lang === "ar" ? "المسارات المهنية" : "Target Careers"}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-3">
-                      {roadmap.topCareers.map((career, idx) => (
-                        <li key={idx} className="flex items-center justify-between p-3 bg-secondary rounded-lg text-sm font-medium">
-                          {career}
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-
-                <Card className="border shadow-sm bg-primary/5 border-primary/10">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Brain className="h-5 w-5 text-primary" />
-                      {lang === "ar" ? "المواد الموصى بها" : "Focus Subjects"}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {roadmap.recommendedSubjects.map((subject, idx) => (
-                        <span key={idx} className="bg-background border px-3 py-1.5 rounded-md text-sm font-medium shadow-sm">
-                          {subject}
-                        </span>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <div className="pt-4 flex gap-4">
-                  <Button variant="outline" className="w-full" onClick={() => window.print()}>
-                    {lang === "ar" ? "تصدير PDF" : "Export PDF"}
-                  </Button>
-                  <Button className="w-full" onClick={() => window.location.href = "/videos"}>
-                    {lang === "ar" ? "ابدأ التعلم" : "Start Learning"}
-                  </Button>
-                </div>
-              </div>
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-3 pb-8">
+              <Button variant="outline" onClick={() => setRoadmap(null)} className="flex-1">
+                {lang === "ar" ? "↩ جرب مساراً آخر" : "↩ Try another path"}
+              </Button>
+              <Button onClick={handlePrint} className="flex-1 gap-2">
+                <Download className="h-4 w-4" />
+                {lang === "ar" ? "حفظ / طباعة الخارطة" : "Save / Print Roadmap"}
+              </Button>
             </div>
           </div>
         )}

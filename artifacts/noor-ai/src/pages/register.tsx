@@ -17,12 +17,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap } from "lucide-react";
+import { useLang } from "@/lib/language";
 
 const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters."),
-  email: z.string().email("Please enter a valid email address."),
-  password: z.string().min(6, "Password must be at least 6 characters."),
+  name: z.string().min(2),
+  email: z.string().email(),
+  password: z.string().min(6),
 });
 
 export default function Register() {
@@ -30,14 +30,11 @@ export default function Register() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const registerMutation = useRegister();
+  const { lang } = useLang();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-    },
+    defaultValues: { name: "", email: "", password: "" },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
@@ -45,15 +42,15 @@ export default function Register() {
       onSuccess: (data) => {
         setToken(data.token);
         toast({
-          title: "Account created",
-          description: "Welcome to NOOR AI.",
+          title: lang === "ar" ? "تم إنشاء الحساب!" : "Account created",
+          description: lang === "ar" ? "أهلاً بك في نُور AI." : "Welcome to NOOR AI.",
         });
         setLocation("/dashboard");
       },
       onError: (error: any) => {
         toast({
-          title: "Registration failed",
-          description: error?.error || "Please try again later.",
+          title: lang === "ar" ? "فشل التسجيل" : "Registration failed",
+          description: error?.error || (lang === "ar" ? "حاول مجدداً لاحقاً." : "Please try again later."),
           variant: "destructive",
         });
       },
@@ -65,11 +62,18 @@ export default function Register() {
       <div className="flex-1 flex items-center justify-center p-4 bg-muted/30">
         <Card className="w-full max-w-md shadow-sm">
           <CardHeader className="space-y-3 items-center text-center">
-            <div className="h-12 w-12 bg-primary/10 text-primary rounded-full flex items-center justify-center">
-              <GraduationCap className="h-6 w-6" />
-            </div>
-            <CardTitle className="text-2xl">Join NOOR AI</CardTitle>
-            <CardDescription>Create an account to start your learning journey</CardDescription>
+            <img
+              src="/logo.jpg"
+              alt="نُور AI"
+              className="h-16 w-16 rounded-full object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+            />
+            <CardTitle className="text-2xl">
+              {lang === "ar" ? "انضم إلى نُور AI" : "Join NOOR AI"}
+            </CardTitle>
+            <CardDescription>
+              {lang === "ar" ? "أنشئ حسابك وابدأ رحلتك التعليمية" : "Create an account to start your learning journey"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -79,9 +83,9 @@ export default function Register() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Full Name</FormLabel>
+                      <FormLabel>{lang === "ar" ? "الاسم الكامل" : "Full Name"}</FormLabel>
                       <FormControl>
-                        <Input placeholder="John Doe" {...field} />
+                        <Input placeholder={lang === "ar" ? "محمد العلي" : "John Doe"} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -92,9 +96,9 @@ export default function Register() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{lang === "ar" ? "البريد الإلكتروني" : "Email"}</FormLabel>
                       <FormControl>
-                        <Input placeholder="you@example.com" type="email" {...field} />
+                        <Input placeholder="you@example.com" type="email" dir="ltr" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -105,29 +109,27 @@ export default function Register() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel>{lang === "ar" ? "كلمة المرور" : "Password"}</FormLabel>
                       <FormControl>
-                        <Input placeholder="••••••••" type="password" {...field} />
+                        <Input placeholder="••••••••" type="password" dir="ltr" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button 
-                  type="submit" 
-                  className="w-full h-11" 
-                  disabled={registerMutation.isPending}
-                >
-                  {registerMutation.isPending ? "Creating account..." : "Sign up"}
+                <Button type="submit" className="w-full h-11" disabled={registerMutation.isPending}>
+                  {registerMutation.isPending
+                    ? (lang === "ar" ? "جارٍ الإنشاء..." : "Creating account...")
+                    : (lang === "ar" ? "إنشاء الحساب" : "Sign up")}
                 </Button>
               </form>
             </Form>
           </CardContent>
           <CardFooter className="justify-center">
             <p className="text-sm text-muted-foreground">
-              Already have an account?{" "}
+              {lang === "ar" ? "لديك حساب بالفعل؟ " : "Already have an account? "}
               <Link href="/login" className="text-primary hover:underline font-medium">
-                Log in
+                {lang === "ar" ? "تسجيل الدخول" : "Log in"}
               </Link>
             </p>
           </CardFooter>

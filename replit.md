@@ -93,9 +93,13 @@ Routes:
 - `GET /api/videos/:id/checkpoints` — Get AI checkpoints
 - `POST /api/videos/:id/checkpoints` — Add checkpoint (admin)
 - `POST /api/chat` — AI Tutor chat
-- `POST /api/career/roadmap` — Generate career roadmap
+- `POST /api/career/roadmap` — Generate career roadmap (100% Arabic, financial projections)
 - `GET /api/subscription/status` — Subscription status
-- `POST /api/subscription/create` — Create crypto/card subscription
+- `POST /api/subscription/create` — Create crypto/card subscription (NOWPayments)
+- `POST /api/subscription/promo` — Redeem promo code (NOOR_ADMIN_TEST)
+- `POST /api/subscription/webhook` — NOWPayments webhook handler
+- `GET /api/admin/users?search=` — Admin: search users
+- `POST /api/admin/users/:id/activate` — Admin: manually activate subscription
 - `GET /api/progress` — Student progress
 - `POST /api/progress` — Record progress
 - `GET /api/dashboard/summary` — Student dashboard
@@ -105,13 +109,25 @@ Routes:
 
 React + Vite frontend (PWA). Pages:
 - `/` — Landing page
-- `/login`, `/register` — Auth
-- `/dashboard` — Student dashboard
-- `/videos` — Video library
-- `/videos/:id` — Smart video player with AI Tutor
-- `/future` — Career roadmap simulator
-- `/subscribe` — Subscription wall
-- `/admin` — Admin panel
+- `/login`, `/register` — Auth (Arabic)
+- `/dashboard` — Student dashboard (Arabic, refresh notice)
+- `/videos` — Video library (free browsing, locked play for non-subscribers, suggestion form)
+- `/videos/:id` — Smart video player with AI Tutor (subscribers only)
+- `/future` — Career roadmap simulator (4-question input, Arabic output, financial projections, 4-stage visual roadmap)
+- `/subscribe` — Subscription wall (crypto USDT, promo code field, Arabic)
+- `/admin-noor` — Owner-only admin panel (user search, manual activate, Telegram link, bulk video upload)
+
+### Categories (updated)
+- قدرات (Qudurat)
+- تحصيلي (Tahsili)
+- ثانوي - مسارات (Secondary)
+- عام (General)
+
+### Promo Code
+`NOOR_ADMIN_TEST` → instant premium activation (1 month)
+
+### Owner Account
+`forthesky7@gmail.com` — seeded as admin on every boot
 
 ### `lib/db` (`@workspace/db`)
 
