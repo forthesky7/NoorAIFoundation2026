@@ -10,7 +10,7 @@ import { randomUUID } from "crypto";
 const router = Router();
 
 const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY || "";
-const SUBSCRIPTION_PRICE_USD = 5.0;
+const SUBSCRIPTION_PRICE_USD = 6.0; // $6 keeps us clear of NOWPayments USDT-TRC20 minimum threshold
 const PROMO_CODE = "NOOR_ADMIN_TEST";
 
 async function createNowPaymentsInvoice(orderId: string) {

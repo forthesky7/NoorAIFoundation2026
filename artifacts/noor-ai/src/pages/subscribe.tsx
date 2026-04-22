@@ -130,7 +130,7 @@ export default function Subscribe() {
                 {lang === "ar" ? "الخطة المميزة" : "Premium Plan"}
               </CardTitle>
               <div className="mt-4 flex items-baseline text-4xl font-extrabold tracking-tight">
-                $5
+                $6
                 <span className="ms-1 text-xl font-medium text-muted-foreground">
                   /{lang === "ar" ? "شهر" : "mo"}
                 </span>
@@ -247,7 +247,7 @@ export default function Subscribe() {
                     <Button className="w-full h-12 text-base" onClick={() => handlePayment("card")} disabled={subscribeMutation.isPending}>
                       {subscribeMutation.isPending && activeMethod === "card"
                         ? <><Loader2 className="h-4 w-4 animate-spin me-2" />{lang === "ar" ? "جاري الفتح..." : "Opening..."}</>
-                        : <><CreditCard className="h-5 w-5 me-2" />{lang === "ar" ? "الدفع بالبطاقة — 5$/شهر" : "Pay with Card — $5/mo"}</>}
+                        : <><CreditCard className="h-5 w-5 me-2" />{lang === "ar" ? "الدفع بالبطاقة — 6$/شهر" : "Pay with Card — $6/mo"}</>}
                     </Button>
                   </div>
                   <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-3">

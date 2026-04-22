@@ -2,7 +2,7 @@ import { useGetDashboardSummary, getGetDashboardSummaryQueryKey } from "@workspa
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Activity, PlayCircle, Clock, Flame, Crown, RefreshCw } from "lucide-react";
+import { Activity, PlayCircle, Clock, Flame, Crown, RefreshCw, Lock } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -108,36 +108,60 @@ export default function Dashboard() {
 
               {summary?.recentVideos && summary.recentVideos.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {summary.recentVideos.map(video => (
-                    <Card key={video.id} className="overflow-hidden flex flex-col hover-elevate transition-all border-border/50">
-                      <div className="aspect-video bg-muted relative">
-                        {video.thumbnailUrl ? (
-                          <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-secondary/50 text-muted-foreground">
-                            <PlayCircle className="h-10 w-10 opacity-50" />
+                  {summary.recentVideos.map(video => {
+                    const locked = !summary?.subscribed && user?.role !== "admin";
+                    const href = locked ? "/subscribe" : `/videos/${video.id}`;
+                    return (
+                      <Link key={video.id} href={href}>
+                        <Card className={`overflow-hidden flex flex-col transition-all border-border/50 cursor-pointer hover:shadow-md ${locked ? "hover:border-primary/50" : "hover-elevate hover:border-primary/30"}`}>
+                          <div className="aspect-video bg-muted relative overflow-hidden">
+                            {video.thumbnailUrl ? (
+                              <img src={video.thumbnailUrl} alt={video.title} className={`w-full h-full object-cover transition-opacity ${locked ? "opacity-55" : "hover:scale-105 transition-transform duration-300"}`} />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-secondary/50 text-muted-foreground">
+                                <PlayCircle className="h-10 w-10 opacity-50" />
+                              </div>
+                            )}
+                            {locked ? (
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/30 to-transparent flex flex-col items-center justify-center gap-2">
+                                <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center">
+                                  <Lock className="h-4 w-4 text-white" />
+                                </div>
+                                <span className="text-white text-xs font-semibold bg-primary/80 px-2.5 py-0.5 rounded-full">
+                                  {lang === "ar" ? "اشترك للتشغيل" : "Subscribe to Play"}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="absolute bottom-2 end-2 bg-black/70 text-white text-xs px-2 py-1 rounded font-medium">
+                                {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, "0")}
+                              </div>
+                            )}
                           </div>
-                        )}
-                        <div className="absolute bottom-2 end-2 bg-black/70 text-white text-xs px-2 py-1 rounded font-medium">
-                          {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
-                        </div>
-                      </div>
-                      <CardContent className="p-4 flex-1 flex flex-col">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">
-                            {getCategoryLabel(video.subject, lang)}
-                          </span>
-                        </div>
-                        <h3 className="font-semibold line-clamp-2 mb-2">{video.title}</h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mt-auto">{video.description}</p>
-                      </CardContent>
-                      <div className="p-4 pt-0 mt-auto">
-                        <Button className="w-full" variant="secondary" asChild>
-                          <Link href={`/videos/${video.id}`}>{t.continueBtn}</Link>
-                        </Button>
-                      </div>
-                    </Card>
-                  ))}
+                          <CardContent className="p-4 flex-1 flex flex-col">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">
+                                {getCategoryLabel(video.subject, lang)}
+                              </span>
+                            </div>
+                            <h3 className={`font-semibold line-clamp-2 mb-2 ${locked ? "text-muted-foreground" : ""}`}>{video.title}</h3>
+                            <p className="text-sm text-muted-foreground line-clamp-2 mt-auto">{video.description}</p>
+                          </CardContent>
+                          <div className="p-4 pt-0 mt-auto">
+                            {locked ? (
+                              <div className="w-full h-9 bg-primary rounded-lg flex items-center justify-center gap-2 text-primary-foreground text-xs font-semibold">
+                                <Lock className="h-3.5 w-3.5" />
+                                {lang === "ar" ? "فعّل الاشتراك — 6$/شهر" : "Unlock Premium — $6/mo"}
+                              </div>
+                            ) : (
+                              <Button className="w-full" variant="secondary">
+                                {t.continueBtn}
+                              </Button>
+                            )}
+                          </div>
+                        </Card>
+                      </Link>
+                    );
+                  })}
                 </div>
               ) : (
                 <Card className="bg-muted/30 border-dashed">
