@@ -113,68 +113,72 @@ export default function Videos() {
           </div>
         ) : filteredVideos && filteredVideos.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredVideos.map(video => (
-              <Card key={video.id} className="overflow-hidden flex flex-col hover-elevate transition-all border-border/50 group">
-                {/* Thumbnail — always visible */}
-                <div className="relative aspect-video bg-muted overflow-hidden">
-                  {video.thumbnailUrl ? (
-                    <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-secondary/50 text-muted-foreground">
-                      <PlayCircle className="h-10 w-10 opacity-50" />
+            {filteredVideos.map(video => isSubscribed ? (
+                <Link key={video.id} href={`/videos/${video.id}`}>
+                  <Card className="overflow-hidden flex flex-col hover-elevate transition-all border-border/50 group cursor-pointer hover:border-primary/40 hover:shadow-md">
+                    <div className="relative aspect-video bg-muted overflow-hidden">
+                      {video.thumbnailUrl ? (
+                        <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-secondary/50 text-muted-foreground">
+                          <PlayCircle className="h-10 w-10 opacity-50" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <PlayCircle className="h-16 w-16 text-white drop-shadow-lg" />
+                      </div>
+                      {video.checkpointCount > 0 && (
+                        <div className="absolute top-2 end-2 bg-primary/90 text-primary-foreground text-xs px-2 py-1 rounded font-medium shadow-sm backdrop-blur-sm flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                          {video.checkpointCount}
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {!isSubscribed && (
-                    <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-2">
-                      <Lock className="h-8 w-8 text-white/90" />
-                      <span className="text-white text-xs font-medium px-3 text-center">
-                        {lang === "ar" ? "اشترك للتشغيل" : "Subscribe to Play"}
-                      </span>
+                    <CardContent className="p-5 flex-1 flex flex-col gap-3">
+                      <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md self-start">{getCategoryLabel(video.subject, lang)}</span>
+                      <h3 className="font-semibold text-base line-clamp-2">{video.title}</h3>
+                      {video.description && <p className="text-sm text-muted-foreground line-clamp-2">{video.description}</p>}
+                      <div className="mt-auto flex items-center gap-2 text-primary text-xs font-medium">
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        <span>{t.discussWithNoor}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ) : (
+                <Link key={video.id} href="/subscribe">
+                  <Card className="overflow-hidden flex flex-col transition-all border-border/50 group cursor-pointer hover:border-primary/60 hover:shadow-md">
+                    <div className="relative aspect-video bg-muted overflow-hidden">
+                      {video.thumbnailUrl ? (
+                        <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-50 transition-opacity" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-secondary/50 text-muted-foreground">
+                          <PlayCircle className="h-10 w-10 opacity-30" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/10 flex flex-col items-center justify-center gap-2">
+                        <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center">
+                          <Lock className="h-5 w-5 text-white" />
+                        </div>
+                        <span className="text-white text-xs font-semibold bg-primary/80 px-3 py-1 rounded-full">
+                          {lang === "ar" ? "اشترك للتشغيل" : "Subscribe to Play"}
+                        </span>
+                      </div>
                     </div>
-                  )}
-                  {isSubscribed && (
-                    <Link href={`/videos/${video.id}`} className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <PlayCircle className="h-16 w-16 text-white opacity-80" />
-                    </Link>
-                  )}
-                  {video.checkpointCount > 0 && (
-                    <div className="absolute top-2 end-2 bg-primary/90 text-primary-foreground text-xs px-2 py-1 rounded font-medium shadow-sm backdrop-blur-sm flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                      {video.checkpointCount}
-                    </div>
-                  )}
-                </div>
-
-                <CardContent className="p-5 flex-1 flex flex-col gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md">
-                      {getCategoryLabel(video.subject, lang)}
-                    </span>
-                  </div>
-                  {/* Title always visible */}
-                  <h3 className="font-semibold text-lg line-clamp-2">{video.title}</h3>
-                  {video.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">{video.description}</p>
-                  )}
-
-                  {isSubscribed ? (
-                    <Link href={`/videos/${video.id}`}>
-                      <Button variant="outline" size="sm" className="w-full mt-auto gap-2 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary font-medium">
-                        <MessageSquare className="h-4 w-4 shrink-0" />
-                        <span className="text-xs truncate">{t.discussWithNoor}</span>
-                      </Button>
-                    </Link>
-                  ) : (
-                    <Button variant="default" size="sm" className="w-full mt-auto gap-2" asChild>
-                      <Link href="/subscribe">
-                        <Lock className="h-4 w-4 shrink-0" />
-                        {lang === "ar" ? "اشترك للتشغيل" : "Subscribe to Play"}
-                      </Link>
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                    <CardContent className="p-5 flex-1 flex flex-col gap-3">
+                      <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md self-start">{getCategoryLabel(video.subject, lang)}</span>
+                      <h3 className="font-semibold text-base line-clamp-2 text-muted-foreground">{video.title}</h3>
+                      <div className="mt-auto">
+                        <div className="w-full h-9 bg-primary rounded-lg flex items-center justify-center gap-2 text-primary-foreground text-xs font-semibold group-hover:bg-primary/90 transition-colors">
+                          <Lock className="h-3.5 w-3.5" />
+                          {lang === "ar" ? "فعّل الاشتراك — 5$/شهر" : "Unlock Premium — $5/mo"}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              )
+            )}
           </div>
         ) : (
           <div className="text-center py-24 bg-card rounded-2xl border border-dashed">

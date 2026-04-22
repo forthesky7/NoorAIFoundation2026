@@ -10,10 +10,8 @@ import {
 } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Brain, Play, CheckCircle2, Send, Lock, MessageCircle, X, ChevronRight } from "lucide-react";
+import { Brain, Play, Send, Lock, MessageCircle, X, ChevronRight, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/language";
@@ -26,40 +24,58 @@ declare global {
 }
 
 type Message = { role: "user" | "assistant"; content: string };
+type CheckpointResult = "correct" | "skipped";
 
-function PaywallBanner({ lang }: { lang: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-10 px-6 text-center bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl">
-      <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-        <Lock className="h-7 w-7 text-primary" />
-      </div>
-      <h3 className="text-xl font-bold mb-2">
-        {lang === "ar" ? "ميزة حصرية للمشتركين" : "Subscribers Only"}
-      </h3>
-      <p className="text-muted-foreground text-sm mb-4 max-w-xs">
-        {lang === "ar"
-          ? "معلم الذكاء الاصطناعي نُور متاح فقط للمشتركين. اشترك بـ 5$ فقط شهرياً."
-          : "Noor AI Tutor is available for subscribers only. Subscribe for just $5/month."}
-      </p>
-      <Button asChild>
-        <Link href="/subscribe">
-          {lang === "ar" ? "اشترك الآن" : "Subscribe Now"}
-        </Link>
-      </Button>
-    </div>
-  );
-}
-
-function NoorAvatar({ size = 32 }: { size?: number }) {
+function NoorAvatar({ size = 36 }: { size?: number }) {
   return (
     <div
-      className="rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-bold shrink-0 shadow-sm"
-      style={{ width: size, height: size, fontSize: size * 0.4 }}
+      className="rounded-full bg-gradient-to-br from-primary via-primary/80 to-primary/60 flex items-center justify-center text-white font-bold shrink-0 shadow-md ring-2 ring-primary/20"
+      style={{ width: size, height: size, fontSize: size * 0.42 }}
     >
       ن
     </div>
   );
 }
+
+function FullPaywall({ lang }: { lang: string }) {
+  return (
+    <div className="min-h-[70vh] flex items-center justify-center px-4">
+      <div className="text-center max-w-md">
+        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6 ring-4 ring-primary/10">
+          <Lock className="h-9 w-9 text-primary" />
+        </div>
+        <h2 className="text-2xl font-bold mb-3">
+          {lang === "ar" ? "محتوى حصري للمشتركين" : "Premium Content"}
+        </h2>
+        <p className="text-muted-foreground mb-2">
+          {lang === "ar"
+            ? "هذا الفيديو متاح فقط للأعضاء المشتركين في نُور AI."
+            : "This video is available to NOOR AI Premium members only."}
+        </p>
+        <p className="text-muted-foreground text-sm mb-8">
+          {lang === "ar"
+            ? "اشترك الآن بـ 5$ شهرياً واحصل على وصول كامل لجميع الدروس والمعلم الذكي."
+            : "Subscribe now for $5/month and get full access to all lessons and the AI tutor."}
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Button asChild size="lg" className="h-12 px-8 text-base">
+            <Link href="/subscribe">{lang === "ar" ? "اشترك الآن — 5$/شهر" : "Subscribe Now — $5/mo"}</Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="h-12">
+            <Link href="/videos">{lang === "ar" ? "العودة للمكتبة" : "Back to Library"}</Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const CHECKPOINT_SIMPLIFICATIONS: Record<number, { ar: string; en: string }> = {
+  "-1": { ar: "ببساطة، المعلم يركز في هذا الجزء على الأسس الأولى للموضوع — اللبنات التي سيُبنى عليها كل شيء لاحقاً.", en: "Simply put, the teacher is focusing here on the foundational concepts — the building blocks for everything that follows." },
+  "-2": { ar: "ببساطة، وصلنا منتصف الرحلة. الأفكار الجديدة تبني على ما تعلمته قبلاً، مثل طوابق بناء.", en: "Simply put, we've reached the halfway point. The new ideas are building on what you learned earlier, like floors of a building." },
+  "-3": { ar: "ببساطة، نقترب من الخاتمة. هذا الجزء يربط كل الخيوط السابقة معاً ليكتمل الصورة الكاملة.", en: "Simply put, we're nearing the end. This section ties all previous threads together to complete the full picture." },
+  "-4": { ar: "ببساطة، انتهى الدرس! الآن حان وقت تثبيت ما تعلمته قبل أن يتبخر من ذاكرتك.", en: "Simply put, the lesson is complete! Now it's time to consolidate what you've learned before it fades." },
+};
 
 export default function VideoPlayer() {
   const [, params] = useRoute("/videos/:id");
@@ -78,27 +94,24 @@ export default function VideoPlayer() {
   const freeChatBottomRef = useRef<HTMLDivElement>(null);
 
   const [currentCheckpoint, setCurrentCheckpoint] = useState<any>(null);
-  const [showCheckpointDialog, setShowCheckpointDialog] = useState(false);
-  const [passedCheckpoints, setPassedCheckpoints] = useState<number[]>([]);
+  const [showCheckpointPopup, setShowCheckpointPopup] = useState(false);
+  const [popupPhase, setPopupPhase] = useState<"simplify" | "question">("simplify");
+  const [checkpointResults, setCheckpointResults] = useState<Record<number, CheckpointResult>>({});
 
   const [chatMessage, setChatMessage] = useState("");
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
   const [isUnderstanding, setIsUnderstanding] = useState(false);
 
-  const [showChatSidebar, setShowChatSidebar] = useState(() => {
-    return new URLSearchParams(search).get("chat") === "1";
-  });
+  const [showChatSidebar, setShowChatSidebar] = useState(() => new URLSearchParams(search).get("chat") === "1");
   const [freeChatMessage, setFreeChatMessage] = useState("");
   const [freeChatHistory, setFreeChatHistory] = useState<Message[]>([]);
 
   const { data: video, isLoading: videoLoading } = useGetVideo(videoId, {
     query: { enabled: !!videoId, queryKey: getGetVideoQueryKey(videoId) }
   });
-
   const { data: checkpoints } = useGetVideoCheckpoints(videoId, {
-    query: { enabled: !!videoId, queryKey: getGetVideoCheckpointsQueryKey(videoId) }
+    query: { enabled: !!videoId && isSubscribed, queryKey: getGetVideoCheckpointsQueryKey(videoId) }
   });
-
   const sendMessageMutation = useSendChatMessage();
   const freeChatMutation = useSendChatMessage();
   const recordProgressMutation = useRecordProgress();
@@ -106,14 +119,18 @@ export default function VideoPlayer() {
   const duration = video?.duration || 300;
 
   const autoCheckpoints = [
-    { id: -1, timestampSeconds: Math.floor(duration * 0.25), question: lang === "ar" ? "ما الفكرة الرئيسية التي فهمتها حتى الآن من هذا الدرس؟ اشرحها بكلماتك." : "What is the main idea you've understood so far? Explain in your own words." },
-    { id: -2, timestampSeconds: Math.floor(duration * 0.5), question: lang === "ar" ? "كيف ترتبط المعلومات التي تعلمتها للتو بما شاهدته في بداية الدرس؟" : "How does what you just learned connect to what you saw at the beginning?" },
-    { id: -3, timestampSeconds: Math.floor(duration * 0.75), question: lang === "ar" ? "ما السؤال الواحد الذي لا يزال يدور في ذهنك حول هذا الدرس؟" : "What is the one question still on your mind about this lesson?" },
+    { id: -1, timestampSeconds: Math.floor(duration * 0.25), question: lang === "ar" ? "ما الفكرة الرئيسية التي استوعبتها حتى الآن؟ اشرحها بكلماتك أنت." : "What is the main idea you've understood so far? Explain it in your own words." },
+    { id: -2, timestampSeconds: Math.floor(duration * 0.50), question: lang === "ar" ? "كيف ترتبط هذه المعلومات الجديدة بما شاهدته في بداية الدرس؟" : "How does this new information connect to what you saw at the beginning?" },
+    { id: -3, timestampSeconds: Math.floor(duration * 0.75), question: lang === "ar" ? "ما أبرز نقطة أثارت تفكيرك في هذا الجزء؟ لماذا؟" : "What key point made you think the most in this section? Why?" },
+    { id: -4, timestampSeconds: Math.floor(duration * 0.95), question: lang === "ar" ? "ما أهم درس واحد تأخذه من هذا الفيديو كاملاً؟ كيف ستوظفه؟" : "What is the single most important lesson from this entire video? How will you use it?" },
   ];
 
   const activeCheckpoints = (checkpoints && checkpoints.length > 0) ? checkpoints : autoCheckpoints;
 
+  const passedCheckpointIds = Object.keys(checkpointResults).map(Number);
+
   useEffect(() => {
+    if (!isSubscribed) return;
     if (!window.YT) {
       const tag = document.createElement("script");
       tag.src = "https://www.youtube.com/iframe_api";
@@ -123,29 +140,27 @@ export default function VideoPlayer() {
       setPlayerReady(true);
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, []);
+  }, [isSubscribed]);
 
   useEffect(() => {
-    if (playerReady && video?.youtubeId && !playerRef.current) {
-      playerRef.current = new window.YT.Player(`youtube-player-${videoId}`, {
-        height: "100%",
-        width: "100%",
-        videoId: video.youtubeId,
-        playerVars: {
-          playsinline: 1,
-          rel: 0,
-          modestbranding: 1,
-          iv_load_policy: 3,
-          showinfo: 0,
-          fs: 1,
-          cc_load_policy: 0,
-          disablekb: 0,
-          origin: window.location.origin,
-        },
-        events: { onStateChange: onPlayerStateChange },
-      });
-    }
-  }, [playerReady, video]);
+    if (!isSubscribed || !playerReady || !video?.youtubeId || playerRef.current) return;
+    playerRef.current = new window.YT.Player(`youtube-player-${videoId}`, {
+      height: "100%",
+      width: "100%",
+      videoId: video.youtubeId,
+      playerVars: {
+        playsinline: 1,
+        rel: 0,
+        modestbranding: 1,
+        iv_load_policy: 3,
+        showinfo: 0,
+        fs: 1,
+        cc_load_policy: 0,
+        origin: window.location.origin,
+      },
+      events: { onStateChange: onPlayerStateChange },
+    });
+  }, [playerReady, video, isSubscribed]);
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -160,8 +175,8 @@ export default function VideoPlayer() {
       setFreeChatHistory([{
         role: "assistant",
         content: lang === "ar"
-          ? `مرحباً! أنا نُور 🌟 معلمك الذكي.\n\nأنا هنا لأساعدك على فهم درس "${video?.title || "هذا الدرس"}" بعمق.\n\n**ما الذي لفت انتباهك حتى الآن؟** أو اسألني أي سؤال يدور في ذهنك.`
-          : `Hello! I'm Noor 🌟 your AI tutor.\n\nI'm here to help you deeply understand "${video?.title || "this lesson"}".\n\n**What caught your attention so far?** Or ask me anything on your mind.`,
+          ? `مرحباً! أنا نُور 🌟 معلمك الذكي.\n\nأنا هنا لمساعدتك على فهم درس "${video?.title || "هذا الدرس"}" بعمق.\n\n**ما الذي لفت انتباهك حتى الآن؟** أو اسألني أي سؤال.`
+          : `Hello! I'm Noor 🌟 your AI tutor.\n\nI'm here to help you deeply understand "${video?.title || "this lesson"}".\n\n**What caught your attention so far?** Or ask me anything.`,
       }]);
     }
   }, [showChatSidebar, video?.title]);
@@ -173,6 +188,10 @@ export default function VideoPlayer() {
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
       if (event.data === window.YT.PlayerState.ENDED) {
         recordProgressMutation.mutate({ data: { videoId, watchedSeconds: Math.floor(duration), completed: true } });
+        const endCp = autoCheckpoints[3];
+        if (!checkpointResults[-4]) {
+          triggerCheckpoint(endCp);
+        }
       }
     }
   };
@@ -185,28 +204,37 @@ export default function VideoPlayer() {
       recordProgressMutation.mutate({ data: { videoId, watchedSeconds: Math.floor(currentTime) } });
     }
 
-    if (!isSubscribed) return;
-
-    const upcomingCheckpoint = activeCheckpoints.find(cp =>
-      !passedCheckpoints.includes(cp.id) &&
+    const upcoming = activeCheckpoints.find(cp =>
+      !checkpointResults[cp.id] &&
       Math.abs(currentTime - cp.timestampSeconds) < 1.5
     );
 
-    if (upcomingCheckpoint && !showCheckpointDialog) {
+    if (upcoming && !showCheckpointPopup) {
       playerRef.current.pauseVideo();
-      setCurrentCheckpoint(upcomingCheckpoint);
-      setShowCheckpointDialog(true);
-      setChatHistory([{
-        role: "assistant",
-        content: lang === "ar"
-          ? `🔔 **توقفنا هنا للتحقق من فهمك.**\n\n${upcomingCheckpoint.question}`
-          : `🔔 **Checkpoint!** Let's check your understanding.\n\n${upcomingCheckpoint.question}`
-      }]);
-      setIsUnderstanding(false);
+      triggerCheckpoint(upcoming);
     }
   };
 
-  const handleSendCheckpointMessage = () => {
+  const triggerCheckpoint = (cp: typeof autoCheckpoints[0]) => {
+    setCurrentCheckpoint(cp);
+    setPopupPhase("simplify");
+    setShowCheckpointPopup(true);
+    setChatHistory([]);
+    setIsUnderstanding(false);
+    setChatMessage("");
+  };
+
+  const handleProceedToQuestion = () => {
+    setPopupPhase("question");
+    setChatHistory([{
+      role: "assistant",
+      content: lang === "ar"
+        ? `🔔 **سؤالك الآن:**\n\n${currentCheckpoint.question}`
+        : `🔔 **Your question:**\n\n${currentCheckpoint.question}`
+    }]);
+  };
+
+  const handleSendAnswer = () => {
     if (!chatMessage.trim() || !currentCheckpoint) return;
     const userMsg = chatMessage;
     setChatMessage("");
@@ -220,14 +248,34 @@ export default function VideoPlayer() {
           setChatHistory([...updatedHistory, { role: "assistant", content: res.reply }]);
           if (res.understood) {
             setIsUnderstanding(true);
-            toast({ title: lang === "ar" ? "ممتاز! 🌟" : "Excellent! 🌟", description: lang === "ar" ? "أثبتت فهمك. يمكنك متابعة الفيديو." : "You've demonstrated understanding. Resume the video!" });
+            setCheckpointResults(prev => ({ ...prev, [currentCheckpoint.id]: "correct" }));
+            toast({ title: lang === "ar" ? "ممتاز! 🌟" : "Excellent! 🌟", description: lang === "ar" ? "أثبتت فهمك. المؤشر أصبح أخضر!" : "You demonstrated understanding. Dot is now green!" });
           }
         },
         onError: () => {
-          setChatHistory([...updatedHistory, { role: "assistant", content: lang === "ar" ? "عذراً، حدث خطأ. أعد المحاولة." : "Sorry, an error occurred. Please try again." }]);
+          setChatHistory([...updatedHistory, { role: "assistant", content: lang === "ar" ? "عذراً، حدث خطأ. أعد المحاولة." : "Sorry, an error occurred." }]);
         }
       }
     );
+  };
+
+  const handleResumeAfterCorrect = () => {
+    setShowCheckpointPopup(false);
+    setCurrentCheckpoint(null);
+    playerRef.current?.playVideo();
+  };
+
+  const handleSkip = () => {
+    if (currentCheckpoint) {
+      setCheckpointResults(prev => ({ ...prev, [currentCheckpoint.id]: "skipped" }));
+    }
+    setShowCheckpointPopup(false);
+    setCurrentCheckpoint(null);
+    playerRef.current?.playVideo();
+    toast({
+      title: lang === "ar" ? "⚠️ تذكر!" : "⚠️ Remember!",
+      description: lang === "ar" ? "التعلم الحقيقي يأتي من المحاولة. سيتحول المؤشر رمادياً." : "Real learning comes from trying. The dot turned grey.",
+    });
   };
 
   const handleSendFreeMessage = () => {
@@ -236,35 +284,22 @@ export default function VideoPlayer() {
     setFreeChatMessage("");
     const updatedHistory = [...freeChatHistory, { role: "user" as const, content: userMsg }];
     setFreeChatHistory(updatedHistory);
-
     freeChatMutation.mutate(
       { data: { message: userMsg, videoId, history: updatedHistory } },
       {
-        onSuccess: (res) => {
-          setFreeChatHistory([...updatedHistory, { role: "assistant", content: res.reply }]);
-        },
-        onError: () => {
-          setFreeChatHistory([...updatedHistory, { role: "assistant", content: lang === "ar" ? "عذراً، حدث خطأ." : "Sorry, an error occurred." }]);
-        }
+        onSuccess: (res) => setFreeChatHistory([...updatedHistory, { role: "assistant", content: res.reply }]),
+        onError: () => setFreeChatHistory([...updatedHistory, { role: "assistant", content: lang === "ar" ? "عذراً، حدث خطأ." : "Sorry, an error occurred." }]),
       }
     );
-  };
-
-  const handleResume = () => {
-    if (currentCheckpoint) setPassedCheckpoints(prev => [...prev, currentCheckpoint.id]);
-    setShowCheckpointDialog(false);
-    setCurrentCheckpoint(null);
-    playerRef.current?.playVideo();
   };
 
   if (videoLoading) {
     return (
       <AppLayout>
-        <div className="container mx-auto px-4 py-8">
-          <Skeleton className="w-full aspect-video rounded-xl mb-8" />
-          <Skeleton className="h-10 w-2/3 mb-4" />
+        <div className="container mx-auto px-4 py-8 max-w-5xl">
+          <Skeleton className="w-full aspect-video rounded-xl mb-6" />
+          <Skeleton className="h-8 w-2/3 mb-3" />
           <Skeleton className="h-4 w-full mb-2" />
-          <Skeleton className="h-4 w-1/2" />
         </div>
       </AppLayout>
     );
@@ -280,119 +315,228 @@ export default function VideoPlayer() {
     );
   }
 
+  if (!isSubscribed) {
+    return (
+      <AppLayout>
+        <FullPaywall lang={lang} />
+      </AppLayout>
+    );
+  }
+
+  const cpSimplification = currentCheckpoint
+    ? (CHECKPOINT_SIMPLIFICATIONS[currentCheckpoint.id]?.[lang === "ar" ? "ar" : "en"] || (lang === "ar" ? "ببساطة، دعنا نتوقف لحظة لنتأكد من فهمك." : "Simply put, let's pause for a moment to check your understanding."))
+    : "";
+
   return (
     <AppLayout>
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className={cn("grid gap-6 transition-all", showChatSidebar ? "grid-cols-1 lg:grid-cols-5" : "grid-cols-1 lg:grid-cols-3")}>
+      <div className="container mx-auto px-4 py-5 max-w-6xl">
+        <div className={cn("flex gap-5", showChatSidebar ? "flex-col lg:flex-row" : "flex-col")}>
 
-          {/* Main content */}
-          <div className={cn("space-y-5", showChatSidebar ? "lg:col-span-3" : "lg:col-span-2")}>
+          {/* Main column */}
+          <div className={cn("space-y-4 min-w-0", showChatSidebar ? "lg:flex-1" : "w-full")}>
 
-            {/* YouTube Player with Security Overlay */}
-            <div className="w-full bg-black rounded-xl overflow-hidden shadow-lg border relative aspect-video group">
-              <div id={`youtube-player-${videoId}`} className="w-full h-full border-0" />
+            {/* 16:9 Video Player */}
+            <div className="relative w-full rounded-xl overflow-hidden shadow-xl border bg-black" style={{ aspectRatio: "16/9" }}>
+              <div id={`youtube-player-${videoId}`} className="absolute inset-0 w-full h-full" />
 
-              {/* Security overlays — blocks YouTube branding links */}
-              {/* Top bar: covers channel name + video title on hover */}
-              <div className="absolute top-0 left-0 right-0 h-12 bg-transparent z-10 pointer-events-none" aria-hidden="true" />
-              {/* Top-right corner: covers YouTube logo (top-right on some embeds) */}
-              <div className="absolute top-0 right-0 w-28 h-12 bg-black/0 z-10" aria-hidden="true" />
-              {/* Bottom-right corner: covers "Watch on YouTube" button */}
-              <div className="absolute bottom-8 right-0 w-32 h-10 bg-black z-10 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
-              {/* Bottom-left: covers YouTube logo watermark */}
-              <div className="absolute bottom-8 left-0 w-20 h-10 bg-black z-10 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
+              {/* Security: transparent click-blocking overlays on YouTube branding areas */}
+              {/* Top-right: YouTube watermark logo */}
+              <div className="absolute top-0 right-0 w-[88px] h-[48px] z-20 cursor-default" onClick={e => e.preventDefault()} />
+              {/* Top bar hover title/channel (covers top strip) */}
+              <div className="absolute top-0 left-0 right-0 h-[52px] z-20 cursor-default" style={{ pointerEvents: "none" }} />
+              {/* Bottom-right: Watch on YouTube button + YouTube logo — rendered as black bar that blends with player bar */}
+              <div
+                className="absolute bottom-0 right-0 w-[180px] h-[42px] bg-black/90 z-20 cursor-default"
+                onClick={e => e.preventDefault()}
+              />
 
-              {/* Checkpoint progress markers */}
-              <div className="absolute bottom-0 left-0 w-full h-1 bg-white/20 pointer-events-none z-20">
-                {activeCheckpoints.map(cp => (
-                  <div
-                    key={cp.id}
-                    className={cn(
-                      "absolute top-0 h-full w-1 -ml-0.5",
-                      passedCheckpoints.includes(cp.id) ? "bg-green-400" : "bg-primary"
-                    )}
-                    style={{ left: `${(cp.timestampSeconds / duration) * 100}%` }}
-                  />
-                ))}
+              {/* Progress dots on bottom edge */}
+              <div className="absolute bottom-0 left-0 right-[180px] h-[3px] bg-white/15 z-30 pointer-events-none">
+                {activeCheckpoints.map(cp => {
+                  const result = checkpointResults[cp.id];
+                  return (
+                    <div
+                      key={cp.id}
+                      className={cn(
+                        "absolute top-0 h-full w-[4px] -translate-x-1/2 rounded-full",
+                        result === "correct" ? "bg-green-400 shadow-[0_0_6px_1px_rgba(74,222,128,0.8)]" :
+                        result === "skipped" ? "bg-gray-400" : "bg-primary"
+                      )}
+                      style={{ left: `${(cp.timestampSeconds / duration) * 100}%` }}
+                    />
+                  );
+                })}
               </div>
             </div>
 
-            {/* Video info */}
+            {/* Video meta */}
             <div>
-              <div className="flex flex-wrap items-center gap-2 mb-3">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
                 <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md">{video.subject}</span>
-                {isSubscribed && (
-                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-md flex items-center gap-1">
-                    <Brain className="h-3 w-3" />
-                    {activeCheckpoints.length} {lang === "ar" ? "نقاط تحقق ذكية" : "AI checkpoints"}
-                  </span>
+                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-md flex items-center gap-1">
+                  <Brain className="h-3 w-3" />
+                  {lang === "ar" ? `${activeCheckpoints.length} محطات تفاعلية` : `${activeCheckpoints.length} interactive stops`}
+                </span>
+              </div>
+              <h1 className="text-xl md:text-2xl font-bold mb-2">{video.title}</h1>
+              {video.description && <p className="text-muted-foreground text-sm">{video.description}</p>}
+            </div>
+
+            {/* Chat toggle button */}
+            <Button
+              variant={showChatSidebar ? "default" : "outline"}
+              className="w-full h-11 gap-3 font-medium"
+              onClick={() => setShowChatSidebar(v => !v)}
+            >
+              <MessageCircle className="h-4 w-4 shrink-0" />
+              <span>{lang === "ar" ? "ناقش الدرس مع نُور AI — المعلم الذكي" : "Discuss with NOOR AI — Smart Tutor"}</span>
+              <ChevronRight className={cn("h-4 w-4 ms-auto transition-transform", showChatSidebar && "rotate-180")} />
+            </Button>
+
+            {/* Noor Avatar Checkpoint Popup */}
+            {showCheckpointPopup && currentCheckpoint && (
+              <div className="rounded-2xl border border-primary/30 bg-card shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
+                {/* Header */}
+                <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-background border-b px-5 py-4 flex items-center gap-3">
+                  <NoorAvatar size={44} />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-base">{lang === "ar" ? "نُور AI — توقف ذكي" : "Noor AI — Smart Pause"}</div>
+                    <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                      {lang === "ar" ? "متصل ومستعد للمساعدة" : "Online & ready to help"}
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {lang === "ar" ? "وقفة تعليمية" : "Learning break"}
+                  </div>
+                </div>
+
+                {popupPhase === "simplify" ? (
+                  /* Phase 1: Simplification */
+                  <div className="p-5 space-y-4">
+                    <div className="bg-primary/5 border border-primary/15 rounded-xl p-4">
+                      <p className="text-xs font-semibold text-primary mb-2 uppercase tracking-wide">
+                        {lang === "ar" ? "🎯 تبسيط سريع" : "🎯 Quick Summary"}
+                      </p>
+                      <p className="text-sm leading-relaxed text-foreground">{cpSimplification}</p>
+                    </div>
+                    <Button onClick={handleProceedToQuestion} className="w-full h-11 gap-2 text-base">
+                      <Brain className="h-5 w-5" />
+                      {lang === "ar" ? "أنا مستعد — ابدأ السؤال ←" : "I'm ready — Ask me →"}
+                    </Button>
+                  </div>
+                ) : (
+                  /* Phase 2: Question + Chat */
+                  <div className="flex flex-col">
+                    <div className="max-h-72 overflow-y-auto p-5 space-y-3 bg-muted/10">
+                      {chatHistory.map((msg, i) => (
+                        <div key={i} className={cn("flex gap-2", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
+                          {msg.role === "assistant" && <NoorAvatar size={26} />}
+                          <div className={cn(
+                            "rounded-2xl px-4 py-2.5 text-sm max-w-[88%] whitespace-pre-wrap leading-relaxed",
+                            msg.role === "user"
+                              ? "bg-primary text-primary-foreground rounded-tr-sm"
+                              : "bg-card border shadow-sm text-foreground rounded-tl-sm"
+                          )}>
+                            {msg.content}
+                          </div>
+                        </div>
+                      ))}
+                      {sendMessageMutation.isPending && (
+                        <div className="flex gap-2">
+                          <NoorAvatar size={26} />
+                          <div className="bg-card border shadow-sm rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm flex gap-1 items-center">
+                            <span className="animate-bounce">●</span>
+                            <span className="animate-bounce" style={{ animationDelay: "0.2s" }}>●</span>
+                            <span className="animate-bounce" style={{ animationDelay: "0.4s" }}>●</span>
+                          </div>
+                        </div>
+                      )}
+                      <div ref={chatBottomRef} />
+                    </div>
+
+                    <div className="p-4 border-t bg-card">
+                      {isUnderstanding ? (
+                        <Button onClick={handleResumeAfterCorrect} className="w-full h-12 text-base bg-green-600 hover:bg-green-700 text-white gap-2">
+                          <Play className="h-5 w-5 fill-current" />
+                          {lang === "ar" ? "ممتاز! 🌟 متابعة الفيديو" : "Excellent! 🌟 Resume Video"}
+                        </Button>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="flex gap-2">
+                            <Textarea
+                              placeholder={lang === "ar" ? "اكتب إجابتك بكلماتك الخاصة..." : "Write your answer in your own words..."}
+                              value={chatMessage}
+                              onChange={e => setChatMessage(e.target.value)}
+                              className="min-h-[56px] resize-none text-sm"
+                              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendAnswer(); } }}
+                              autoFocus
+                            />
+                            <Button
+                              className="h-auto aspect-square p-0 shrink-0 self-end"
+                              onClick={handleSendAnswer}
+                              disabled={!chatMessage.trim() || sendMessageMutation.isPending}
+                            >
+                              <Send className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="flex justify-between items-center px-1">
+                            <span className="text-xs text-muted-foreground">{lang === "ar" ? "Enter للإرسال" : "Enter to send"}</span>
+                            <button
+                              onClick={handleSkip}
+                              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                            >
+                              <AlertTriangle className="h-3 w-3 text-amber-500" />
+                              {lang === "ar" ? "تخطي (سيتحول رمادياً)" : "Skip (turns grey)"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold mb-3">{video.title}</h1>
-              <p className="text-muted-foreground text-sm">{video.description}</p>
-            </div>
-
-            {/* Paywall banner for non-subscribers */}
-            {!isSubscribed && <PaywallBanner lang={lang} />}
-
-            {/* Chat with Noor button — subscribers only */}
-            {isSubscribed && (
-              <Button
-                variant={showChatSidebar ? "default" : "outline"}
-                className="w-full h-12 gap-3 font-medium"
-                onClick={() => setShowChatSidebar(v => !v)}
-              >
-                <MessageCircle className="h-5 w-5 shrink-0" />
-                <span>{lang === "ar" ? "ناقش الدرس مع نُور AI — المعلم الذكي" : "Discuss with NOOR AI — Smart Tutor"}</span>
-                <ChevronRight className={cn("h-4 w-4 ms-auto transition-transform", showChatSidebar && "rotate-180")} />
-              </Button>
             )}
           </div>
 
-          {/* Right Sidebar — Checkpoints or Chat */}
-          <div className={cn("space-y-4", showChatSidebar ? "lg:col-span-2" : "lg:col-span-1")}>
-
-            {/* Persistent Chat Sidebar */}
-            {showChatSidebar && isSubscribed ? (
-              <Card className="flex flex-col h-[calc(100vh-160px)] min-h-[480px] border-primary/20">
-                <CardHeader className="pb-3 border-b shrink-0">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <NoorAvatar size={36} />
-                      <div>
-                        <CardTitle className="text-base">{lang === "ar" ? "نُور AI — معلمك الذكي" : "Noor AI — Smart Tutor"}</CardTitle>
-                        <p className="text-xs text-green-600 flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                          {lang === "ar" ? "متصل ومستعد" : "Online & ready"}
-                        </p>
+          {/* Chat Sidebar */}
+          {showChatSidebar && (
+            <div className="lg:w-[360px] shrink-0">
+              <div className="flex flex-col rounded-xl border border-primary/20 bg-card shadow-lg h-[calc(100vh-160px)] min-h-[480px] sticky top-4">
+                <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
+                  <div className="flex items-center gap-3">
+                    <NoorAvatar size={34} />
+                    <div>
+                      <div className="font-semibold text-sm">{lang === "ar" ? "نُور AI — معلمك الذكي" : "Noor AI — Smart Tutor"}</div>
+                      <div className="text-xs text-green-600 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                        {lang === "ar" ? "متصل" : "Online"}
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => setShowChatSidebar(false)} className="h-8 w-8">
-                      <X className="h-4 w-4" />
-                    </Button>
                   </div>
-                </CardHeader>
+                  <Button variant="ghost" size="icon" onClick={() => setShowChatSidebar(false)} className="h-8 w-8">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/20">
+                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-muted/10">
                   {freeChatHistory.map((msg, i) => (
-                    <div key={i} className={cn("flex gap-2 max-w-full", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
-                      {msg.role === "assistant" && <NoorAvatar size={28} />}
-                      <div
-                        className={cn(
-                          "rounded-2xl px-4 py-3 text-sm max-w-[85%] whitespace-pre-wrap leading-relaxed",
-                          msg.role === "user"
-                            ? "bg-primary text-primary-foreground rounded-tr-sm"
-                            : "bg-card border shadow-sm text-card-foreground rounded-tl-sm"
-                        )}
-                      >
+                    <div key={i} className={cn("flex gap-2", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
+                      {msg.role === "assistant" && <NoorAvatar size={26} />}
+                      <div className={cn(
+                        "rounded-2xl px-4 py-2.5 text-sm max-w-[88%] whitespace-pre-wrap leading-relaxed",
+                        msg.role === "user"
+                          ? "bg-primary text-primary-foreground rounded-tr-sm"
+                          : "bg-card border shadow-sm text-foreground rounded-tl-sm"
+                      )}>
                         {msg.content}
                       </div>
                     </div>
                   ))}
                   {freeChatMutation.isPending && (
                     <div className="flex gap-2">
-                      <NoorAvatar size={28} />
-                      <div className="bg-card border shadow-sm rounded-2xl rounded-tl-sm px-4 py-3 text-sm flex gap-1">
+                      <NoorAvatar size={26} />
+                      <div className="bg-card border shadow-sm rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm flex gap-1">
                         <span className="animate-bounce">●</span>
                         <span className="animate-bounce" style={{ animationDelay: "0.2s" }}>●</span>
                         <span className="animate-bounce" style={{ animationDelay: "0.4s" }}>●</span>
@@ -402,13 +546,13 @@ export default function VideoPlayer() {
                   <div ref={freeChatBottomRef} />
                 </div>
 
-                <div className="p-3 border-t bg-card shrink-0">
+                <div className="p-3 border-t bg-card/50 shrink-0">
                   <div className="flex gap-2">
                     <Textarea
-                      placeholder={lang === "ar" ? "اسأل نُور أي سؤال عن الدرس..." : "Ask Noor anything about the lesson..."}
+                      placeholder={lang === "ar" ? "اسأل نُور أي سؤال..." : "Ask Noor anything..."}
                       value={freeChatMessage}
                       onChange={e => setFreeChatMessage(e.target.value)}
-                      className="min-h-[60px] max-h-[120px] resize-none text-sm"
+                      className="min-h-[52px] max-h-[100px] resize-none text-sm"
                       onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendFreeMessage(); } }}
                     />
                     <Button
@@ -421,145 +565,14 @@ export default function VideoPlayer() {
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1.5 text-center">
-                    {lang === "ar" ? "نُور يسألك بأسلوب سقراطي ويرشدك دون أن يعطيك الإجابة مباشرة" : "Noor guides you with questions — Socratic method"}
+                    {lang === "ar" ? "أسلوب سقراطي — نُور يرشدك ولا يعطيك الإجابة" : "Socratic method — Noor guides, not gives answers"}
                   </p>
                 </div>
-              </Card>
-            ) : (
-              /* Checkpoints Panel */
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-primary" />
-                    {lang === "ar" ? "نقاط التحقق الذكية" : "Smart Checkpoints"}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {!isSubscribed ? (
-                    <div className="text-center py-4">
-                      <Lock className="h-8 w-8 text-primary/40 mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground mb-3">{lang === "ar" ? "مخصص للمشتركين فقط" : "Subscribers only"}</p>
-                      <Button size="sm" variant="outline" asChild>
-                        <Link href="/subscribe">{lang === "ar" ? "اشترك" : "Subscribe"}</Link>
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {activeCheckpoints.sort((a, b) => a.timestampSeconds - b.timestampSeconds).map((cp, idx) => {
-                        const isPassed = passedCheckpoints.includes(cp.id);
-                        return (
-                          <div key={cp.id} className={cn(
-                            "flex items-start gap-3 p-3 rounded-lg border transition-colors",
-                            isPassed ? "bg-green-50/50 border-green-200 dark:bg-green-950/20 dark:border-green-900" : "bg-card"
-                          )}>
-                            <div className={cn(
-                              "mt-0.5 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0",
-                              isPassed ? "bg-green-500 text-white" : "bg-primary/10 text-primary"
-                            )}>
-                              {isPassed ? "✓" : idx + 1}
-                            </div>
-                            <div>
-                              <p className="text-xs font-mono text-muted-foreground mb-1">
-                                {Math.floor(cp.timestampSeconds / 60)}:{(cp.timestampSeconds % 60).toString().padStart(2, "0")}
-                              </p>
-                              <p className="text-xs text-muted-foreground line-clamp-2">{cp.question}</p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-          </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Interactive AI Checkpoint Dialog */}
-      {isSubscribed && (
-        <Dialog open={showCheckpointDialog} onOpenChange={open => !open && handleResume()}>
-          <DialogContent className="sm:max-w-[520px] h-[82vh] sm:h-[620px] flex flex-col p-0 gap-0 overflow-hidden rounded-2xl">
-            <DialogHeader className="p-5 pb-4 border-b bg-gradient-to-r from-primary/5 to-background shrink-0">
-              <div className="flex items-center gap-3">
-                <NoorAvatar size={40} />
-                <div>
-                  <DialogTitle className="text-lg flex items-center gap-2">
-                    {lang === "ar" ? "نقطة تحقق — نُور AI" : "Checkpoint — Noor AI"}
-                  </DialogTitle>
-                  <DialogDescription className="text-xs">
-                    {lang === "ar"
-                      ? "توقف الفيديو. أجب على سؤال نُور لتثبيت فهمك."
-                      : "Video paused. Answer Noor's question to prove understanding."}
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
-
-            <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-muted/20">
-              {chatHistory.map((msg, i) => (
-                <div key={i} className={cn("flex gap-2", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
-                  {msg.role === "assistant" && <NoorAvatar size={28} />}
-                  <div className={cn(
-                    "rounded-2xl px-4 py-3 text-sm max-w-[85%] whitespace-pre-wrap leading-relaxed",
-                    msg.role === "user"
-                      ? "bg-primary text-primary-foreground rounded-tr-sm"
-                      : "bg-card border shadow-sm text-card-foreground rounded-tl-sm"
-                  )}>
-                    {msg.content}
-                  </div>
-                </div>
-              ))}
-              {sendMessageMutation.isPending && (
-                <div className="flex gap-2">
-                  <NoorAvatar size={28} />
-                  <div className="bg-card border shadow-sm rounded-2xl rounded-tl-sm px-4 py-3 text-sm flex gap-1">
-                    <span className="animate-bounce">●</span>
-                    <span className="animate-bounce" style={{ animationDelay: "0.2s" }}>●</span>
-                    <span className="animate-bounce" style={{ animationDelay: "0.4s" }}>●</span>
-                  </div>
-                </div>
-              )}
-              <div ref={chatBottomRef} />
-            </div>
-
-            <div className="p-4 border-t bg-card shrink-0">
-              {isUnderstanding ? (
-                <Button onClick={handleResume} className="w-full h-12 text-base bg-green-600 hover:bg-green-700 text-white gap-2">
-                  <Play className="h-5 w-5 fill-current" />
-                  {lang === "ar" ? "متابعة الفيديو ▶" : "Resume Video ▶"}
-                </Button>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <Textarea
-                      placeholder={lang === "ar" ? "اكتب إجابتك هنا..." : "Type your answer here..."}
-                      value={chatMessage}
-                      onChange={e => setChatMessage(e.target.value)}
-                      className="min-h-[64px] resize-none text-sm"
-                      onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendCheckpointMessage(); } }}
-                      autoFocus
-                    />
-                    <Button
-                      className="h-auto aspect-square p-0 shrink-0 self-end"
-                      onClick={handleSendCheckpointMessage}
-                      disabled={!chatMessage.trim() || sendMessageMutation.isPending}
-                    >
-                      <Send className="h-5 w-5" />
-                    </Button>
-                  </div>
-                  <div className="flex justify-between items-center px-1">
-                    <span className="text-xs text-muted-foreground">{lang === "ar" ? "Enter للإرسال" : "Enter to send"}</span>
-                    <Button variant="ghost" size="sm" onClick={handleResume} className="text-xs h-7 text-muted-foreground hover:text-foreground">
-                      {lang === "ar" ? "تخطي الآن" : "Skip for now"}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
     </AppLayout>
   );
 }

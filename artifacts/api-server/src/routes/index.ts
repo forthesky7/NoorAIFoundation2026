@@ -7,6 +7,7 @@ import careerRouter from "./career";
 import subscriptionRouter from "./subscription";
 import progressRouter from "./progress";
 import dashboardRouter from "./dashboard";
+import adminRouter from "./admin";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(careerRouter);
 router.use(subscriptionRouter);
 router.use(progressRouter);
 router.use(dashboardRouter);
+router.use(adminRouter);
 
 export default router;

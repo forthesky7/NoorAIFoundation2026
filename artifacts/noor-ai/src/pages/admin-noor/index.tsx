@@ -68,6 +68,16 @@ export default function AdminNoor() {
   const [telegramLink, setTelegramLink] = useState(() => localStorage.getItem("noor_telegram_link") || "");
   const [telegramSaved, setTelegramSaved] = useState(false);
 
+  // Payment settings (Lemon Squeezy + NOWPayments TRC20)
+  const [lsApiKey, setLsApiKey] = useState("");
+  const [lsStoreId, setLsStoreId] = useState("");
+  const [lsVariantId, setLsVariantId] = useState("");
+  const [lsWebhookSecret, setLsWebhookSecret] = useState("");
+  const [trc20Wallet, setTrc20Wallet] = useState("");
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsSaved, setSettingsSaved] = useState(false);
+  const [settingsStatus, setSettingsStatus] = useState<{ isLemonSqueezyConfigured?: boolean } | null>(null);
+
   const { data: stats, isLoading: statsLoading } = useGetAdminDashboard({
     query: { queryKey: getGetAdminDashboardQueryKey() },
   });
@@ -89,6 +99,40 @@ export default function AdminNoor() {
   };
 
   useEffect(() => { fetchUsers(); }, []);
+
+  useEffect(() => {
+    apiClient.get("/admin/settings").then(async r => {
+      if (r.ok) {
+        const data = await r.json();
+        setSettingsStatus(data);
+        setLsStoreId(data.LEMONSQUEEZY_STORE_ID || "");
+        setLsVariantId(data.LEMONSQUEEZY_VARIANT_ID || "");
+        setTrc20Wallet(data.NOWPAYMENTS_WALLET_TRC20 || "");
+      }
+    }).catch(() => {});
+  }, []);
+
+  const handleSavePaymentSettings = async () => {
+    setSettingsSaving(true);
+    const payload: Record<string, string> = {};
+    if (lsApiKey.trim()) payload.LEMONSQUEEZY_API_KEY = lsApiKey.trim();
+    if (lsStoreId.trim()) payload.LEMONSQUEEZY_STORE_ID = lsStoreId.trim();
+    if (lsVariantId.trim()) payload.LEMONSQUEEZY_VARIANT_ID = lsVariantId.trim();
+    if (lsWebhookSecret.trim()) payload.LEMONSQUEEZY_WEBHOOK_SECRET = lsWebhookSecret.trim();
+    if (trc20Wallet.trim()) payload.NOWPAYMENTS_WALLET_TRC20 = trc20Wallet.trim();
+    const res = await apiClient.post("/admin/settings", payload);
+    setSettingsSaving(false);
+    if (res.ok) {
+      const data = await res.json();
+      setSettingsSaved(true);
+      setTimeout(() => setSettingsSaved(false), 3000);
+      toast({ title: lang === "ar" ? "تم حفظ الإعدادات ✓" : "Settings saved ✓" });
+      setSettingsStatus(prev => ({ ...prev, isLemonSqueezyConfigured: !!(payload.LEMONSQUEEZY_API_KEY || lsApiKey) && !!(payload.LEMONSQUEEZY_STORE_ID || lsStoreId) && !!(payload.LEMONSQUEEZY_VARIANT_ID || lsVariantId) }));
+      setLsApiKey(""); setLsWebhookSecret("");
+    } else {
+      toast({ title: lang === "ar" ? "فشل الحفظ" : "Save failed", variant: "destructive" });
+    }
+  };
 
   const handleActivate = async (userId: number) => {
     setActivatingId(userId);
@@ -318,6 +362,104 @@ export default function AdminNoor() {
                   {lang === "ar" ? "معاينة الرابط ←" : "Preview link →"}
                 </a>
               )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Payment Settings */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <CreditCard className="h-5 w-5 text-primary" />
+            {lang === "ar" ? "إعدادات الدفع" : "Payment Settings"}
+          </h2>
+          <Card>
+            <CardContent className="pt-5 space-y-5">
+              {settingsStatus?.isLemonSqueezyConfigured && (
+                <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg px-4 py-3">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  {lang === "ar" ? "Lemon Squeezy مُفعَّل — الدفع بالبطاقة يعمل" : "Lemon Squeezy configured — Card payments active"}
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-semibold text-muted-foreground mb-3">
+                  {lang === "ar" ? "🍋 Lemon Squeezy — بطاقة ائتمان" : "🍋 Lemon Squeezy — Credit Card"}
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">API Key</label>
+                    <Input
+                      type="password"
+                      placeholder={lang === "ar" ? "أدخل مفتاح API (يبدأ بـ eyJ...)" : "Enter API Key (starts with eyJ...)"}
+                      value={lsApiKey}
+                      onChange={e => setLsApiKey(e.target.value)}
+                      dir="ltr"
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Webhook Secret</label>
+                    <Input
+                      type="password"
+                      placeholder={lang === "ar" ? "Webhook Secret (اختياري)" : "Webhook Secret (optional)"}
+                      value={lsWebhookSecret}
+                      onChange={e => setLsWebhookSecret(e.target.value)}
+                      dir="ltr"
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Store ID</label>
+                    <Input
+                      placeholder={lang === "ar" ? "رقم متجرك في Lemon Squeezy" : "Your Lemon Squeezy Store ID"}
+                      value={lsStoreId}
+                      onChange={e => setLsStoreId(e.target.value)}
+                      dir="ltr"
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Variant ID (Product)</label>
+                    <Input
+                      placeholder={lang === "ar" ? "رقم المنتج / الـ Variant" : "Product Variant ID"}
+                      value={lsVariantId}
+                      onChange={e => setLsVariantId(e.target.value)}
+                      dir="ltr"
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="border-t pt-4">
+                <p className="text-sm font-semibold text-muted-foreground mb-3">
+                  {lang === "ar" ? "₮ NOWPayments — USDT TRC20" : "₮ NOWPayments — USDT TRC20"}
+                </p>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    {lang === "ar" ? "عنوان محفظة TRC20 (يبدأ بـ T)" : "TRC20 Wallet Address (starts with T)"}
+                  </label>
+                  <Input
+                    placeholder="TXxx...xxxx (Tron TRC20 address)"
+                    value={trc20Wallet}
+                    onChange={e => setTrc20Wallet(e.target.value)}
+                    dir="ltr"
+                    className="font-mono text-sm"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button onClick={handleSavePaymentSettings} disabled={settingsSaving}>
+                  {settingsSaving ? (
+                    <>{lang === "ar" ? "جارٍ الحفظ..." : "Saving..."}</>
+                  ) : settingsSaved ? (
+                    <><CheckCircle2 className="h-4 w-4 me-2" />{lang === "ar" ? "تم الحفظ ✓" : "Saved ✓"}</>
+                  ) : (
+                    <><Settings className="h-4 w-4 me-2" />{lang === "ar" ? "حفظ الإعدادات" : "Save Settings"}</>
+                  )}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  {lang === "ar" ? "تُحفظ مباشرة على الخادم وتعمل فوراً." : "Saved to server and applied immediately."}
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>
