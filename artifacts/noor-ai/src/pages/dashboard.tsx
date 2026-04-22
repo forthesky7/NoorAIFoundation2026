@@ -2,7 +2,7 @@ import { useGetDashboardSummary, getGetDashboardSummaryQueryKey } from "@workspa
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Activity, PlayCircle, Clock, Flame, Crown, RefreshCw, Lock } from "lucide-react";
+import { Activity, PlayCircle, Clock, Flame, Crown, Lock } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -21,16 +21,10 @@ export default function Dashboard() {
     <AppLayout>
       <div className="container mx-auto px-4 py-8 max-w-6xl">
 
-        {/* Refresh Notice */}
-        <div className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-lg px-4 py-2.5 mb-6 text-sm text-primary">
-          <RefreshCw className="h-4 w-4 shrink-0" />
-          <span>{t.refreshNotice}</span>
-        </div>
-
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
-              {t.dashboardWelcome}، {firstName} 👋
+              {t.dashboardWelcome}، {firstName}
             </h1>
             <p className="text-muted-foreground mt-1">
               {lang === "ar" ? "هنا ملخص تقدمك التعليمي." : "Here is your learning progress."}
@@ -148,8 +142,7 @@ export default function Dashboard() {
                           </CardContent>
                           <div className="p-4 pt-0 mt-auto">
                             {locked ? (
-                              <div className="w-full h-9 bg-primary rounded-lg flex items-center justify-center gap-2 text-primary-foreground text-xs font-semibold">
-                                <Lock className="h-3.5 w-3.5" />
+                              <div className="w-full h-9 bg-primary rounded-lg flex items-center justify-center text-primary-foreground text-xs font-semibold">
                                 {lang === "ar" ? "فعّل الاشتراك — 5$/شهر" : "Unlock Premium — $5/mo"}
                               </div>
                             ) : (

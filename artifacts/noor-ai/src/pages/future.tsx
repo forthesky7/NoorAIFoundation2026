@@ -7,6 +7,7 @@ import { useGenerateCareerRoadmap } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,7 @@ const arabicInterests = [
   { value: "أعمال", label: "💼 الأعمال وريادة الأعمال" },
   { value: "تصميم", label: "🎨 التصميم والإبداع" },
   { value: "قانون", label: "⚖️ القانون والعدالة" },
+  { value: "أخرى", label: "✏️ أخرى..." },
 ];
 
 const englishInterests = [
@@ -32,6 +34,7 @@ const englishInterests = [
   { value: "أعمال", label: "💼 Business & Entrepreneurship" },
   { value: "تصميم", label: "🎨 Design & Creativity" },
   { value: "قانون", label: "⚖️ Law & Justice" },
+  { value: "أخرى", label: "✏️ Other..." },
 ];
 
 const gradeLevels = [
@@ -87,6 +90,7 @@ export default function FutureSimulator() {
   const [roadmap, setRoadmap] = useState<any>(null);
 
   const [selectedInterest, setSelectedInterest] = useState<string>("");
+  const [customInterest, setCustomInterest] = useState<string>("");
   const [currentGrade, setCurrentGrade] = useState<string>("");
   const [approxGrade, setApproxGrade] = useState<string>("");
   const [livingStandard, setLivingStandard] = useState<string>("");
@@ -96,6 +100,7 @@ export default function FutureSimulator() {
 
   const handleGenerate = () => {
     if (!selectedInterest || !currentGrade) return;
+    const finalInterest = selectedInterest === "أخرى" ? (customInterest.trim() || "أخرى") : selectedInterest;
     const enrichedGoals = [
       goals,
       approxGrade ? `مستوى الدراسة: ${approxGrade}` : "",
@@ -103,7 +108,7 @@ export default function FutureSimulator() {
     ].filter(Boolean).join(". ");
 
     roadmapMutation.mutate(
-      { data: { interests: [selectedInterest], currentGrade, goals: enrichedGoals } },
+      { data: { interests: [finalInterest], currentGrade, goals: enrichedGoals } },
       { onSuccess: (data) => setRoadmap(data) }
     );
   };
@@ -181,6 +186,15 @@ export default function FutureSimulator() {
                     </button>
                   ))}
                 </div>
+                {selectedInterest === "أخرى" && (
+                  <Input
+                    placeholder={lang === "ar" ? "اكتب مجالك المخصص هنا..." : "Type your custom field here..."}
+                    value={customInterest}
+                    onChange={e => setCustomInterest(e.target.value)}
+                    className="mt-2 h-11"
+                    autoFocus
+                  />
+                )}
               </div>
 
               {/* Q2 — Grade Level */}

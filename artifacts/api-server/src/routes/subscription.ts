@@ -231,7 +231,7 @@ router.post("/subscription/promo", authMiddleware, async (req: AuthRequest, res)
 router.post("/subscription/webhook", async (req, res) => {
   try {
     const { payment_status, order_id } = req.body;
-    if (payment_status === "finished" || payment_status === "confirmed") {
+    if (["finished", "confirmed", "partially_paid", "confirming", "sending"].includes(payment_status)) {
       const subs = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.paymentId, order_id));
       if (subs.length > 0) {
         const sub = subs[0];

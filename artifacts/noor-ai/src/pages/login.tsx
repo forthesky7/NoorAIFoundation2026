@@ -106,14 +106,14 @@ export default function Login() {
                             type={showPassword ? "text" : "password"}
                             dir="ltr"
                             autoComplete="current-password"
-                            className="pe-10"
+                            className="pl-10"
                             {...field}
                           />
                           <button
                             type="button"
                             tabIndex={-1}
                             onClick={() => setShowPassword(v => !v)}
-                            className="absolute inset-y-0 end-0 flex items-center pe-3 text-muted-foreground hover:text-foreground transition-colors"
+                            className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground hover:text-foreground transition-colors"
                             aria-label={showPassword ? "Hide password" : "Show password"}
                           >
                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

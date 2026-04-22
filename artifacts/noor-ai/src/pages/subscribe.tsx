@@ -1,17 +1,13 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ShieldCheck, Check, CreditCard, Bitcoin, Copy, ExternalLink, Tag, Loader2, Zap, AlertCircle } from "lucide-react";
+import { ShieldCheck, Check, CreditCard, Bitcoin, Copy, ExternalLink, Loader2, Zap, AlertCircle } from "lucide-react";
 import { useCreateSubscription } from "@workspace/api-client-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { useQueryClient } from "@tanstack/react-query";
-import { getGetMeQueryKey } from "@workspace/api-client-react";
 import { Redirect, Link } from "wouter";
 import { useLang } from "@/lib/language";
-import { apiClient } from "@/lib/api";
 
 type PayMethod = "crypto" | "card";
 
@@ -20,11 +16,8 @@ export default function Subscribe() {
   const { toast } = useToast();
   const { lang } = useLang();
   const subscribeMutation = useCreateSubscription();
-  const queryClient = useQueryClient();
   const [paymentInfo, setPaymentInfo] = useState<any>(null);
   const [activeMethod, setActiveMethod] = useState<PayMethod>("crypto");
-  const [promoCode, setPromoCode] = useState("");
-  const [promoLoading, setPromoLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
   if (user?.subscribed || user?.role === "admin") {
@@ -69,30 +62,6 @@ export default function Subscribe() {
     toast({ title: lang === "ar" ? "تم نسخ العنوان ✓" : "Address copied ✓" });
   };
 
-  const handlePromoCode = async () => {
-    if (!promoCode.trim()) return;
-    setPromoLoading(true);
-    try {
-      const res = await apiClient.post("/subscription/promo", { code: promoCode.trim() });
-      if (res.ok) {
-        await queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
-        toast({
-          title: lang === "ar" ? "🎉 تم تفعيل اشتراكك!" : "🎉 Subscription activated!",
-          description: lang === "ar" ? "مرحباً في نُور AI Premium!" : "Welcome to NOOR AI Premium!",
-        });
-      } else {
-        const data = await res.json();
-        toast({
-          title: lang === "ar" ? "كود غير صالح" : "Invalid code",
-          description: data.error || (lang === "ar" ? "تحقق من الكود وحاول مجدداً." : "Check the code and try again."),
-          variant: "destructive",
-        });
-      }
-    } catch {
-      toast({ title: lang === "ar" ? "خطأ في الاتصال" : "Connection error", variant: "destructive" });
-    }
-    setPromoLoading(false);
-  };
 
   const features = lang === "ar" ? [
     "جلسات معلم الذكاء الاصطناعي نُور بالأسلوب السقراطي",
@@ -261,26 +230,6 @@ export default function Subscribe() {
                 </div>
               )}
 
-              {/* Promo Code */}
-              <div className="border-t pt-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <Tag className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">{lang === "ar" ? "لديك كود ترويجي؟" : "Have a promo code?"}</span>
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder={lang === "ar" ? "أدخل الكود" : "Enter code"}
-                    value={promoCode}
-                    onChange={e => setPromoCode(e.target.value)}
-                    dir="ltr"
-                    className="font-mono uppercase"
-                    onKeyDown={e => e.key === "Enter" && handlePromoCode()}
-                  />
-                  <Button variant="outline" onClick={handlePromoCode} disabled={promoLoading || !promoCode.trim()}>
-                    {promoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (lang === "ar" ? "تفعيل" : "Apply")}
-                  </Button>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </div>

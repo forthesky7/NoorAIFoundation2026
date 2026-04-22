@@ -337,3 +337,31 @@ body {
     inset: -1px;
   }
 }
+
+@media print {
+  header,
+  nav,
+  .print-hide {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+  .container {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+  .shadow-sm,
+  .shadow-xl,
+  .shadow-2xl {
+    box-shadow: none !important;
+  }
+  a[href]::after {
+    content: none !important;
+  }
+  button {
+    display: none !important;
+  }
+}

@@ -17,7 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import {
   PlayCircle, Users, CreditCard, Plus, Trash2, Link2, Upload,
-  CheckCircle2, AlertCircle, Search, UserCheck, Send, Settings
+  CheckCircle2, AlertCircle, Search, UserCheck, Send, Settings, Tag, X
 } from "lucide-react";
 import { apiClient } from "@/lib/api";
 
@@ -67,6 +67,32 @@ export default function AdminNoor() {
   // Telegram link
   const [telegramLink, setTelegramLink] = useState(() => localStorage.getItem("noor_telegram_link") || "");
   const [telegramSaved, setTelegramSaved] = useState(false);
+
+  // Category manager
+  const [customCategories, setCustomCategories] = useState<{ value: string; labelAr: string; labelEn: string }[]>(() => {
+    try { return JSON.parse(localStorage.getItem("noor_custom_categories") || "[]"); } catch { return []; }
+  });
+  const [newCatValue, setNewCatValue] = useState("");
+  const [newCatLabelAr, setNewCatLabelAr] = useState("");
+  const [newCatLabelEn, setNewCatLabelEn] = useState("");
+
+  const allCategories = [...CATEGORIES, ...customCategories];
+
+  const handleAddCategory = () => {
+    if (!newCatValue.trim() || !newCatLabelAr.trim()) return;
+    const updated = [...customCategories, { value: newCatValue.trim(), labelAr: newCatLabelAr.trim(), labelEn: newCatLabelEn.trim() || newCatLabelAr.trim() }];
+    setCustomCategories(updated);
+    localStorage.setItem("noor_custom_categories", JSON.stringify(updated));
+    setNewCatValue(""); setNewCatLabelAr(""); setNewCatLabelEn("");
+    toast({ title: lang === "ar" ? "تمت إضافة الفئة ✓" : "Category added ✓" });
+  };
+
+  const handleDeleteCategory = (val: string) => {
+    const updated = customCategories.filter(c => c.value !== val);
+    setCustomCategories(updated);
+    localStorage.setItem("noor_custom_categories", JSON.stringify(updated));
+    toast({ title: lang === "ar" ? "تم حذف الفئة" : "Category removed" });
+  };
 
   // Payment settings (Lemon Squeezy + NOWPayments TRC20)
   const [lsApiKey, setLsApiKey] = useState("");
@@ -464,6 +490,89 @@ export default function AdminNoor() {
           </Card>
         </div>
 
+        {/* Category Manager */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Tag className="h-5 w-5 text-primary" />
+            {lang === "ar" ? "إدارة الفئات" : "Category Manager"}
+          </h2>
+          <Card>
+            <CardContent className="pt-5 space-y-5">
+              {/* Current Categories */}
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-3">
+                  {lang === "ar" ? "الفئات الحالية:" : "Current categories:"}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {CATEGORIES.map(c => (
+                    <Badge key={c.value} variant="secondary" className="text-xs gap-1 px-2 py-1">
+                      {lang === "ar" ? c.labelAr : c.labelEn}
+                      <span className="text-muted-foreground ms-1 opacity-60">{lang === "ar" ? "(افتراضي)" : "(default)"}</span>
+                    </Badge>
+                  ))}
+                  {customCategories.map(c => (
+                    <Badge key={c.value} className="text-xs gap-1 px-2 py-1 bg-primary/15 text-primary border border-primary/30">
+                      {lang === "ar" ? c.labelAr : c.labelEn}
+                      <button onClick={() => handleDeleteCategory(c.value)} className="ms-1 hover:text-destructive transition-colors">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              {/* Add New Category */}
+              <div className="border-t pt-4">
+                <p className="text-sm font-medium mb-3">
+                  {lang === "ar" ? "إضافة فئة جديدة:" : "Add new category:"}
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      {lang === "ar" ? "المعرف (Slug)" : "Slug / Key"}
+                    </label>
+                    <Input
+                      placeholder="e.g. Physics"
+                      value={newCatValue}
+                      onChange={e => setNewCatValue(e.target.value)}
+                      dir="ltr"
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      {lang === "ar" ? "الاسم بالعربية *" : "Arabic Label *"}
+                    </label>
+                    <Input
+                      placeholder="مثال: الفيزياء"
+                      value={newCatLabelAr}
+                      onChange={e => setNewCatLabelAr(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      {lang === "ar" ? "الاسم بالإنجليزية" : "English Label"}
+                    </label>
+                    <Input
+                      placeholder="e.g. Physics"
+                      value={newCatLabelEn}
+                      onChange={e => setNewCatLabelEn(e.target.value)}
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+                <Button
+                  className="mt-3"
+                  onClick={handleAddCategory}
+                  disabled={!newCatValue.trim() || !newCatLabelAr.trim()}
+                >
+                  <Plus className="h-4 w-4 me-2" />
+                  {lang === "ar" ? "إضافة الفئة" : "Add Category"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Video Management */}
         <div>
           <div className="flex flex-wrap items-center justify-between mb-4 gap-3">
@@ -498,7 +607,7 @@ export default function AdminNoor() {
                       <Select value={category} onValueChange={setCategory}>
                         <SelectTrigger><SelectValue placeholder={t.allCategories} /></SelectTrigger>
                         <SelectContent>
-                          {CATEGORIES.map(c => (
+                          {allCategories.map(c => (
                             <SelectItem key={c.value} value={c.value}>{lang === "ar" ? c.labelAr : c.labelEn}</SelectItem>
                           ))}
                         </SelectContent>
@@ -542,7 +651,7 @@ export default function AdminNoor() {
                       <Select value={bulkCategory} onValueChange={setBulkCategory}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          {CATEGORIES.map(c => (<SelectItem key={c.value} value={c.value}>{lang === "ar" ? c.labelAr : c.labelEn}</SelectItem>))}
+                          {allCategories.map(c => (<SelectItem key={c.value} value={c.value}>{lang === "ar" ? c.labelAr : c.labelEn}</SelectItem>))}
                         </SelectContent>
                       </Select>
                     </div>

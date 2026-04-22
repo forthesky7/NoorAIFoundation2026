@@ -478,7 +478,7 @@ export default function VideoPlayer() {
             {/* 16:9 Video container — clean, no black bars */}
             <div
               className="relative w-full rounded-xl overflow-hidden shadow-xl border border-border/50"
-              style={{ aspectRatio: "16/9", background: "#000" }}
+              style={{ aspectRatio: "16/9", background: "transparent" }}
             >
               {/* YouTube IFrame target */}
               <div id={`yt-player-${videoId}`} className="absolute inset-0 w-full h-full" />

@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useLogout } from "@workspace/api-client-react";
-import { LogOut, Menu, UserCircle, Languages, Moon, Sun, Settings } from "lucide-react";
+import { LogOut, Menu, UserCircle, Languages, Moon, Sun, Settings, Crown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -140,7 +140,14 @@ export function Navbar() {
                   <DropdownMenuItem asChild>
                     <Link href="/dashboard">{t.dashboard}</Link>
                   </DropdownMenuItem>
-                  {!user?.subscribed && user?.role !== "admin" && (
+                  {user?.subscribed || user?.role === "admin" ? (
+                    <DropdownMenuItem asChild>
+                      <Link href="/subscribe" className="flex items-center gap-2">
+                        <Crown className="h-4 w-4 text-primary" />
+                        {lang === "ar" ? "اشتراكي — نشط" : "My Subscription — Active"}
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : (
                     <DropdownMenuItem asChild>
                       <Link href="/subscribe">{lang === "ar" ? "الاشتراك" : "Subscription"}</Link>
                     </DropdownMenuItem>
