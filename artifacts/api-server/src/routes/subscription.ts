@@ -9,9 +9,13 @@ import { randomUUID } from "crypto";
 const router = Router();
 
 const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY || "";
-const NOWPAYMENTS_WALLET = process.env.NOWPAYMENTS_WALLET || "0xC9E65529aE5954C795036E93eB654D3858dA2AE8";
+const NOWPAYMENTS_WALLET_TRC20 = process.env.NOWPAYMENTS_WALLET_TRC20 || process.env.NOWPAYMENTS_WALLET || "TYourTRC20WalletAddressHere";
 const SUBSCRIPTION_PRICE_USD = 5.0;
 const PROMO_CODE = "NOOR_ADMIN_TEST";
+
+const LEMONSQUEEZY_API_KEY = process.env.LEMONSQUEEZY_API_KEY || "";
+const LEMONSQUEEZY_STORE_ID = process.env.LEMONSQUEEZY_STORE_ID || "";
+const LEMONSQUEEZY_VARIANT_ID = process.env.LEMONSQUEEZY_VARIANT_ID || "";
 
 async function createNowPaymentsInvoice(orderId: string) {
   const domain = process.env.REPLIT_DOMAINS
@@ -27,7 +31,7 @@ async function createNowPaymentsInvoice(orderId: string) {
     body: JSON.stringify({
       price_amount: SUBSCRIPTION_PRICE_USD,
       price_currency: "usd",
-      pay_currency: "usdterc20",
+      pay_currency: "usdttrc20",
       order_id: orderId,
       order_description: "NOOR AI Pro Subscription - 1 Month",
       success_url: `${domain}/dashboard`,
@@ -40,6 +44,51 @@ async function createNowPaymentsInvoice(orderId: string) {
     throw new Error(`NOWPayments error: ${err}`);
   }
   return res.json();
+}
+
+async function createLemonSqueezyCheckout(userId: number, email: string, orderId: string) {
+  const domain = process.env.REPLIT_DOMAINS
+    ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}`
+    : "";
+
+  const res = await fetch("https://api.lemonsqueezy.com/v1/checkouts", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${LEMONSQUEEZY_API_KEY}`,
+      "Content-Type": "application/vnd.api+json",
+      Accept: "application/vnd.api+json",
+    },
+    body: JSON.stringify({
+      data: {
+        type: "checkouts",
+        attributes: {
+          checkout_options: {
+            embed: false,
+            media: true,
+            logo: true,
+          },
+          checkout_data: {
+            email,
+            custom: { user_id: String(userId), order_id: orderId },
+          },
+          product_options: {
+            redirect_url: `${domain}/dashboard`,
+          },
+        },
+        relationships: {
+          store: { data: { type: "stores", id: LEMONSQUEEZY_STORE_ID } },
+          variant: { data: { type: "variants", id: LEMONSQUEEZY_VARIANT_ID } },
+        },
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`LemonSqueezy error: ${err}`);
+  }
+  const data = await res.json();
+  return data.data?.attributes?.url as string;
 }
 
 router.get("/subscription/status", authMiddleware, async (req: AuthRequest, res) => {
@@ -76,12 +125,52 @@ router.post("/subscription/create", authMiddleware, async (req: AuthRequest, res
     const parsed = CreateSubscriptionBody.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Invalid input" });
 
+    const users = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!));
+    const user = users[0];
     const paymentId = randomUUID();
     const expiresAt = new Date();
     expiresAt.setMonth(expiresAt.getMonth() + 1);
 
-    let paymentUrl = `https://nowpayments.io/payment/?iid=${paymentId}`;
-    let paymentAddress = NOWPAYMENTS_WALLET;
+    const paymentMethod = parsed.data.paymentMethod;
+
+    if (paymentMethod === "card") {
+      if (!LEMONSQUEEZY_API_KEY || !LEMONSQUEEZY_STORE_ID || !LEMONSQUEEZY_VARIANT_ID) {
+        return res.status(503).json({
+          error: "Card payment is not configured yet.",
+          message: "يرجى إضافة مفاتيح Lemon Squeezy في إعدادات المنصة.",
+          configured: false,
+        });
+      }
+
+      try {
+        const checkoutUrl = await createLemonSqueezyCheckout(req.userId!, user?.email || "", paymentId);
+
+        await db.insert(subscriptionsTable).values({
+          userId: req.userId!,
+          paymentId,
+          paymentMethod: "card",
+          currency: "USD",
+          amount: SUBSCRIPTION_PRICE_USD.toString(),
+          status: "pending",
+          expiresAt,
+        });
+
+        return res.json({
+          paymentId,
+          paymentUrl: checkoutUrl,
+          amount: SUBSCRIPTION_PRICE_USD,
+          currency: "USD",
+          status: "pending",
+          method: "card",
+        });
+      } catch (err: any) {
+        console.error("Lemon Squeezy checkout error:", err);
+        return res.status(500).json({ error: "Failed to create card checkout", details: err.message });
+      }
+    }
+
+    let paymentUrl = `https://nowpayments.io`;
+    let paymentAddress = NOWPAYMENTS_WALLET_TRC20;
     let invoiceId = paymentId;
     let invoiceUrl: string | null = null;
 
@@ -99,8 +188,8 @@ router.post("/subscription/create", authMiddleware, async (req: AuthRequest, res
     await db.insert(subscriptionsTable).values({
       userId: req.userId!,
       paymentId: invoiceId,
-      paymentMethod: parsed.data.paymentMethod,
-      currency: "USDT",
+      paymentMethod: "crypto",
+      currency: "USDT-TRC20",
       amount: SUBSCRIPTION_PRICE_USD.toString(),
       status: "pending",
       expiresAt,
@@ -111,6 +200,7 @@ router.post("/subscription/create", authMiddleware, async (req: AuthRequest, res
       paymentUrl,
       invoiceUrl,
       paymentAddress,
+      network: "TRC20 (Tron)",
       amount: SUBSCRIPTION_PRICE_USD,
       currency: "USDT",
       status: "pending",
@@ -136,10 +226,10 @@ router.post("/subscription/promo", authMiddleware, async (req: AuthRequest, res)
       .set({ subscribed: true, subscriptionExpiresAt: expiresAt })
       .where(eq(usersTable.id, req.userId!));
 
-    const paymentId = `PROMO_${randomUUID()}`;
+    const promoPaymentId = `PROMO_${randomUUID()}`;
     await db.insert(subscriptionsTable).values({
       userId: req.userId!,
-      paymentId,
+      paymentId: promoPaymentId,
       paymentMethod: "promo",
       currency: "PROMO",
       amount: "0",
@@ -182,6 +272,35 @@ router.post("/subscription/webhook", async (req, res) => {
     return res.json({ ok: true });
   } catch (err) {
     console.error(err);
+    return res.status(500).json({ error: "Webhook error" });
+  }
+});
+
+router.post("/subscription/ls-webhook", async (req, res) => {
+  try {
+    const eventName = req.headers["x-event-name"] as string;
+
+    if (eventName === "order_created" || eventName === "subscription_created") {
+      const orderId = req.body?.meta?.custom_data?.order_id;
+      const userId = parseInt(req.body?.meta?.custom_data?.user_id || "0");
+
+      if (orderId && userId) {
+        const expiresAt = new Date();
+        expiresAt.setMonth(expiresAt.getMonth() + 1);
+
+        await db.update(subscriptionsTable)
+          .set({ status: "active" })
+          .where(eq(subscriptionsTable.paymentId, orderId));
+
+        await db.update(usersTable)
+          .set({ subscribed: true, subscriptionExpiresAt: expiresAt })
+          .where(eq(usersTable.id, userId));
+      }
+    }
+
+    return res.json({ received: true });
+  } catch (err) {
+    console.error("LS webhook error:", err);
     return res.status(500).json({ error: "Webhook error" });
   }
 });

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Eye, EyeOff } from "lucide-react";
 import { useLang } from "@/lib/language";
 
 const formSchema = z.object({
@@ -26,11 +28,12 @@ const formSchema = z.object({
 });
 
 export default function Register() {
-  const setToken = useAuthStore((state) => state.setToken);
+  const setToken = useAuthStore(state => state.setToken);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const registerMutation = useRegister();
   const { lang } = useLang();
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -39,7 +42,7 @@ export default function Register() {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     registerMutation.mutate({ data: values }, {
-      onSuccess: (data) => {
+      onSuccess: data => {
         setToken(data.token);
         toast({
           title: lang === "ar" ? "تم إنشاء الحساب!" : "Account created",
@@ -66,7 +69,7 @@ export default function Register() {
               src="/logo.jpg"
               alt="نُور AI"
               className="h-16 w-16 rounded-full object-cover"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+              onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
             />
             <CardTitle className="text-2xl">
               {lang === "ar" ? "انضم إلى نُور AI" : "Join NOOR AI"}
@@ -85,7 +88,7 @@ export default function Register() {
                     <FormItem>
                       <FormLabel>{lang === "ar" ? "الاسم الكامل" : "Full Name"}</FormLabel>
                       <FormControl>
-                        <Input placeholder={lang === "ar" ? "محمد العلي" : "John Doe"} {...field} />
+                        <Input placeholder={lang === "ar" ? "محمد العلي" : "John Doe"} autoComplete="name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -98,7 +101,7 @@ export default function Register() {
                     <FormItem>
                       <FormLabel>{lang === "ar" ? "البريد الإلكتروني" : "Email"}</FormLabel>
                       <FormControl>
-                        <Input placeholder="you@example.com" type="email" dir="ltr" {...field} />
+                        <Input placeholder="you@example.com" type="email" dir="ltr" autoComplete="email" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -111,7 +114,25 @@ export default function Register() {
                     <FormItem>
                       <FormLabel>{lang === "ar" ? "كلمة المرور" : "Password"}</FormLabel>
                       <FormControl>
-                        <Input placeholder="••••••••" type="password" dir="ltr" {...field} />
+                        <div className="relative">
+                          <Input
+                            placeholder="••••••••"
+                            type={showPassword ? "text" : "password"}
+                            dir="ltr"
+                            autoComplete="new-password"
+                            className="pe-10"
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            tabIndex={-1}
+                            onClick={() => setShowPassword(v => !v)}
+                            className="absolute inset-y-0 end-0 flex items-center pe-3 text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label={showPassword ? "Hide password" : "Show password"}
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
