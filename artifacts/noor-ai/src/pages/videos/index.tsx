@@ -171,7 +171,7 @@ export default function Videos() {
                       <div className="mt-auto">
                         <div className="w-full h-9 bg-primary rounded-lg flex items-center justify-center gap-2 text-primary-foreground text-xs font-semibold group-hover:bg-primary/90 transition-colors">
                           <Lock className="h-3.5 w-3.5" />
-                          {lang === "ar" ? "فعّل الاشتراك — 6$/شهر" : "Unlock Premium — $6/mo"}
+                          {lang === "ar" ? "فعّل الاشتراك — 5$/شهر" : "Unlock Premium — $5/mo"}
                         </div>
                       </div>
                     </CardContent>

@@ -54,12 +54,12 @@ function FullPaywall({ lang }: { lang: string }) {
         </p>
         <p className="text-muted-foreground text-sm mb-8">
           {lang === "ar"
-            ? "اشترك الآن بـ 6$ شهرياً واحصل على وصول كامل لجميع الدروس والمعلم الذكي."
-            : "Subscribe now for $6/month and get full access to all lessons and the AI tutor."}
+            ? "اشترك الآن بـ 5$ شهرياً واحصل على وصول كامل لجميع الدروس والمعلم الذكي."
+            : "Subscribe now for $5/month and get full access to all lessons and the AI tutor."}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button asChild size="lg" className="h-12 px-8 text-base">
-            <Link href="/subscribe">{lang === "ar" ? "اشترك الآن — 6$/شهر" : "Subscribe Now — $6/mo"}</Link>
+            <Link href="/subscribe">{lang === "ar" ? "اشترك الآن — 5$/شهر" : "Subscribe Now — $5/mo"}</Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="h-12">
             <Link href="/videos">{lang === "ar" ? "العودة للمكتبة" : "Back to Library"}</Link>
@@ -136,19 +136,25 @@ export default function VideoPlayer() {
   const freeChatMutation = useSendChatMessage();
   const recordProgressMutation = useRecordProgress();
 
-  const duration = video?.duration || 300;
+  const duration = video?.duration || 0;
 
+  // Checkpoints calculated as exact % of total duration — P4 fires on ENDED event only
   const autoCheckpoints = [
-    { id: -1, timestampSeconds: Math.floor(duration * 0.25), question: lang === "ar" ? "ما الفكرة الرئيسية التي استوعبتها حتى الآن؟ اشرحها بكلماتك أنت — كأنك تشرحها لصديق." : "What is the main idea you've understood so far? Explain it in your own words — as if explaining to a friend." },
-    { id: -2, timestampSeconds: Math.floor(duration * 0.50), question: lang === "ar" ? "كيف ترتبط هذه المعلومات الجديدة بما شاهدته في بداية الدرس؟ هل ترى تطوراً في الفكرة؟" : "How does this new information connect to what you saw at the beginning? Do you see an evolution in the idea?" },
-    { id: -3, timestampSeconds: Math.floor(duration * 0.75), question: lang === "ar" ? "ما أبرز نقطة أثارت تفكيرك في هذا الجزء من الدرس؟ لماذا استوقفتك تحديداً؟" : "What key point made you think the most in this section? Why did it stand out to you specifically?" },
-    { id: -4, timestampSeconds: Math.floor(duration * 0.95), question: lang === "ar" ? "ما أهم درس واحد تأخذه من هذا الفيديو كاملاً؟ وكيف ستوظفه في حياتك أو دراستك؟" : "What is the single most important lesson from this entire video? How will you apply it in your life or studies?" },
+    { id: -1, timestampSeconds: duration > 0 ? Math.floor(duration * 0.25) : 0, question: lang === "ar" ? "ما الفكرة الرئيسية التي استوعبتها حتى الآن؟ اشرحها بكلماتك أنت — كأنك تشرحها لصديق." : "What is the main idea you've understood so far? Explain it in your own words — as if explaining to a friend." },
+    { id: -2, timestampSeconds: duration > 0 ? Math.floor(duration * 0.50) : 0, question: lang === "ar" ? "كيف ترتبط هذه المعلومات الجديدة بما شاهدته في بداية الدرس؟ هل ترى تطوراً في الفكرة؟" : "How does this new information connect to what you saw at the beginning? Do you see an evolution in the idea?" },
+    { id: -3, timestampSeconds: duration > 0 ? Math.floor(duration * 0.75) : 0, question: lang === "ar" ? "ما أبرز نقطة أثارت تفكيرك في هذا الجزء من الدرس؟ لماذا استوقفتك تحديداً؟" : "What key point made you think the most in this section? Why did it stand out to you specifically?" },
+    { id: -4, timestampSeconds: duration > 0 ? duration : 0, question: lang === "ar" ? "ما أهم درس واحد تأخذه من هذا الفيديو كاملاً؟ وكيف ستوظفه في حياتك أو دراستك؟" : "What is the single most important lesson from this entire video? How will you apply it in your life or studies?" },
   ];
+  // P1–P3 polled by interval; P4 fires exclusively on ENDED event
+  const pollingCheckpoints = autoCheckpoints.slice(0, 3);
 
   const activeCheckpoints = (checkpoints && checkpoints.length > 0) ? checkpoints : autoCheckpoints;
 
+  const pollingCheckpointsRef = useRef<any[]>([]);
+
   // Keep refs in sync to avoid stale closures in the interval
   useEffect(() => { activeCheckpointsRef.current = activeCheckpoints; }, [activeCheckpoints]);
+  useEffect(() => { pollingCheckpointsRef.current = pollingCheckpoints; }, [pollingCheckpoints]);
   useEffect(() => { checkpointResultsRef.current = checkpointResults; }, [checkpointResults]);
   useEffect(() => { showCheckpointPopupRef.current = showCheckpointPopup; }, [showCheckpointPopup]);
 
@@ -228,7 +234,8 @@ export default function VideoPlayer() {
           if (Math.floor(t) % 30 === 0 && Math.floor(t) > 0) {
             recordProgressMutation.mutate({ data: { videoId, watchedSeconds: Math.floor(t) } });
           }
-          const cps = activeCheckpointsRef.current;
+          // Only poll P1–P3 here; P4 fires exclusively on ENDED
+          const cps = pollingCheckpointsRef.current;
           const results = checkpointResultsRef.current;
           const popupOpen = showCheckpointPopupRef.current;
           if (popupOpen) return;
@@ -462,69 +469,78 @@ export default function VideoPlayer() {
       )}
 
       <div className="container mx-auto px-4 py-5 max-w-7xl">
-        <div className="flex flex-col lg:flex-row gap-5">
+        {/* dir="ltr" forces video-left / sidebar-right on all locales */}
+        <div className="flex flex-col lg:flex-row gap-5" dir="ltr">
 
           {/* ─── LEFT: Video + Meta ─── */}
-          <div className="flex-1 min-w-0 space-y-4">
+          <div className="flex-1 min-w-0 space-y-4" dir="auto">
 
-            {/* 16:9 Video container */}
+            {/* 16:9 Video container — clean, no black bars */}
             <div
-              className="relative w-full rounded-xl overflow-hidden shadow-xl bg-black border border-border/50"
-              style={{ aspectRatio: "16/9" }}
+              className="relative w-full rounded-xl overflow-hidden shadow-xl border border-border/50"
+              style={{ aspectRatio: "16/9", background: "#000" }}
             >
-              {/* YouTube player target */}
+              {/* YouTube IFrame target */}
               <div id={`yt-player-${videoId}`} className="absolute inset-0 w-full h-full" />
 
-              {/* ── YouTube Security Overlays ──
-                  Layer strategy:
-                  1. Full invisible overlay with pointer-events:none — lets clicks pass to the player (play/pause/seek)
-                  2. Opaque black patches on corners where YouTube branding shows up (logo, title, "Watch on YouTube")
+              {/*
+                YouTube Brand Suppression — pointer-events:none approach:
+                These divs visually obscure YouTube branding areas without
+                blocking any player interaction (play/pause/seek/volume).
+                All elements use pointer-events:none so the player beneath remains fully interactive.
               */}
 
-              {/* Main pass-through overlay (transparent, captures nothing) */}
-              <div className="absolute inset-0 z-10" style={{ pointerEvents: "none" }} />
-
-              {/* Top bar: blocks channel name + title hover overlay (covers top ~55px) */}
+              {/* Top gradient — hides channel name & title that appear on hover */}
               <div
-                className="absolute top-0 left-0 right-0 z-20 bg-transparent cursor-default"
-                style={{ height: "52px", pointerEvents: "all" }}
-                onClick={e => e.preventDefault()}
-                onContextMenu={e => e.preventDefault()}
+                className="absolute top-0 left-0 right-0 z-20"
+                style={{
+                  height: "56px",
+                  background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%)",
+                  pointerEvents: "none",
+                }}
               />
 
-              {/* Top-right: YouTube watermark/logo (top-right corner) */}
+              {/* Top-right corner — masks YouTube watermark logo */}
               <div
-                className="absolute top-0 right-0 z-30 cursor-default"
-                style={{ width: "90px", height: "52px", pointerEvents: "all" }}
-                onClick={e => e.preventDefault()}
-                onContextMenu={e => e.preventDefault()}
+                className="absolute top-0 right-0 z-30"
+                style={{
+                  width: "100px",
+                  height: "40px",
+                  background: "linear-gradient(to bottom-left, rgba(0,0,0,0.6) 0%, transparent 100%)",
+                  pointerEvents: "none",
+                }}
               />
 
-              {/* Bottom-right: "Watch on YouTube" button — covered with matching dark bg */}
+              {/* Bottom-right corner — masks "Watch on YouTube" link
+                  Uses a dark gradient that blends with YouTube's control bar colour */}
               <div
-                className="absolute bottom-0 right-0 z-30 rounded-sm cursor-default"
-                style={{ width: "190px", height: "44px", background: "rgba(0,0,0,0.88)", pointerEvents: "all" }}
-                onClick={e => e.preventDefault()}
-                onContextMenu={e => e.preventDefault()}
+                className="absolute bottom-0 right-0 z-30"
+                style={{
+                  width: "200px",
+                  height: "46px",
+                  background: "linear-gradient(to top-left, rgba(0,0,0,0.72) 0%, transparent 100%)",
+                  pointerEvents: "none",
+                }}
               />
 
-              {/* Progress checkpoint dots on bottom bar */}
-              <div className="absolute bottom-0 left-0 right-[190px] h-[3px] z-40 pointer-events-none">
-                {activeCheckpoints.map(cp => {
+              {/* Progress checkpoint dots — above the player, below nothing */}
+              <div className="absolute bottom-[46px] left-0 right-0 h-[4px] z-40 pointer-events-none">
+                {duration > 0 && activeCheckpoints.map(cp => {
+                  if (!cp.timestampSeconds) return null;
                   const result = checkpointResults[cp.id];
+                  const pct = Math.min((cp.timestampSeconds / duration) * 100, 100);
                   return (
                     <div
                       key={cp.id}
-                      title={CHECKPOINT_LABELS[String(cp.id)]?.[lang === "ar" ? "ar" : "en"] || ""}
                       className={cn(
-                        "absolute top-0 w-[5px] h-full -translate-x-1/2 rounded-full",
+                        "absolute top-0 w-[6px] h-full -translate-x-1/2 rounded-full",
                         result === "correct"
                           ? "bg-green-400 shadow-[0_0_8px_2px_rgba(74,222,128,0.9)]"
                           : result === "skipped"
-                            ? "bg-gray-400"
-                            : "bg-primary/80"
+                          ? "bg-gray-400"
+                          : "bg-primary"
                       )}
-                      style={{ left: `${(cp.timestampSeconds / duration) * 100}%` }}
+                      style={{ left: `${pct}%` }}
                     />
                   );
                 })}

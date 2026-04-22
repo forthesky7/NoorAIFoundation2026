@@ -10,7 +10,8 @@ import { randomUUID } from "crypto";
 const router = Router();
 
 const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY || "";
-const SUBSCRIPTION_PRICE_USD = 6.0; // $6 keeps us clear of NOWPayments USDT-TRC20 minimum threshold
+const SUBSCRIPTION_PRICE_USD = 5.0;        // displayed price to users
+const NOWPAYMENTS_PRICE_USD  = 5.50;       // +$0.50 buffer so USDT-TRC20 never hits NOWPayments minimum
 const PROMO_CODE = "NOOR_ADMIN_TEST";
 
 async function createNowPaymentsInvoice(orderId: string) {
@@ -25,7 +26,7 @@ async function createNowPaymentsInvoice(orderId: string) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      price_amount: SUBSCRIPTION_PRICE_USD,
+      price_amount: NOWPAYMENTS_PRICE_USD,
       price_currency: "usd",
       pay_currency: "usdttrc20",
       order_id: orderId,
