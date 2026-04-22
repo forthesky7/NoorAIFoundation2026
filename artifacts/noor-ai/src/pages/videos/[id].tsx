@@ -106,6 +106,7 @@ export default function VideoPlayer() {
   const isSubscribed = user?.subscribed || user?.role === "admin";
 
   const [playerReady, setPlayerReady] = useState(false);
+  const [realDuration, setRealDuration] = useState(0);
   const playerRef = useRef<any>(null);
   const timerRef = useRef<any>(null);
   const chatBottomRef = useRef<HTMLDivElement>(null);
@@ -136,7 +137,8 @@ export default function VideoPlayer() {
   const freeChatMutation = useSendChatMessage();
   const recordProgressMutation = useRecordProgress();
 
-  const duration = video?.duration || 0;
+  // Use real duration fetched from YouTube player; fall back to DB value while player loads
+  const duration = realDuration || video?.duration || 0;
 
   // Checkpoints calculated as exact % of total duration — P4 fires on ENDED event only
   const autoCheckpoints = [
@@ -193,7 +195,13 @@ export default function VideoPlayer() {
         disablekb: 0,
         origin: window.location.origin,
       },
-      events: { onStateChange: onPlayerStateChange },
+      events: {
+        onReady: (e: any) => {
+          const d = e.target.getDuration();
+          if (d && d > 0) setRealDuration(Math.floor(d));
+        },
+        onStateChange: onPlayerStateChange,
+      },
     });
   }, [playerReady, video, isSubscribed]);
 

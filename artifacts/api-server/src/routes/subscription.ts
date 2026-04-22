@@ -10,8 +10,8 @@ import { randomUUID } from "crypto";
 const router = Router();
 
 const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY || "";
-const SUBSCRIPTION_PRICE_USD = 5.0;        // displayed price to users
-const NOWPAYMENTS_PRICE_USD  = 5.50;       // +$0.50 buffer so USDT-TRC20 never hits NOWPayments minimum
+const SUBSCRIPTION_PRICE_USD = 5.0;   // student always pays exactly $5; merchant absorbs all fees
+const NOWPAYMENTS_PRICE_USD  = 5.0;   // same — no markup added to student's bill
 const PROMO_CODE = "NOOR_ADMIN_TEST";
 
 async function createNowPaymentsInvoice(orderId: string) {
