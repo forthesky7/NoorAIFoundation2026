@@ -15,6 +15,7 @@ import { Brain, Play, Send, Lock, AlertTriangle, CheckCircle2, Circle, Clock } f
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/language";
+import { apiClient } from "@/lib/api";
 
 declare global {
   interface Window {
@@ -198,7 +199,12 @@ export default function VideoPlayer() {
       events: {
         onReady: (e: any) => {
           const d = e.target.getDuration();
-          if (d && d > 0) setRealDuration(Math.floor(d));
+          if (d && d > 0) {
+            const secs = Math.floor(d);
+            setRealDuration(secs);
+            // Persist real duration to DB so list views show it correctly
+            apiClient.patch(`/videos/${videoId}/duration`, { duration: secs }).catch(() => {});
+          }
         },
         onStateChange: onPlayerStateChange,
       },

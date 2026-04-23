@@ -12,6 +12,15 @@ import { useState } from "react";
 import { useLang, DEFAULT_CATEGORIES, getCategoryLabel } from "@/lib/language";
 import { useAuth } from "@/hooks/use-auth";
 
+function formatDuration(seconds: number): string {
+  if (!seconds || seconds <= 0) return "--:--";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 export default function Videos() {
   const { t, lang } = useLang();
   const { user } = useAuth();
@@ -126,6 +135,9 @@ export default function Videos() {
                       )}
                       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <PlayCircle className="h-16 w-16 text-white drop-shadow-lg" />
+                      </div>
+                      <div className="absolute bottom-2 end-2 bg-black/70 text-white text-xs px-2 py-1 rounded font-medium">
+                        {formatDuration(video.duration)}
                       </div>
                       {video.checkpointCount > 0 && (
                         <div className="absolute top-2 end-2 bg-primary/90 text-primary-foreground text-xs px-2 py-1 rounded font-medium shadow-sm backdrop-blur-sm flex items-center gap-1">

@@ -92,6 +92,27 @@ router.put("/videos/:id", authMiddleware, adminMiddleware, async (req: AuthReque
   }
 });
 
+// Called by the video player (onReady) to persist the real YouTube duration —
+// any authenticated user can update; only writes if the new value exceeds the stored one
+router.patch("/videos/:id/duration", authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { duration } = req.body;
+    if (!duration || typeof duration !== "number" || duration <= 0) {
+      return res.status(400).json({ error: "Invalid duration" });
+    }
+    const rows = await db.select({ duration: videosTable.duration }).from(videosTable).where(eq(videosTable.id, id));
+    if (!rows.length) return res.status(404).json({ error: "Video not found" });
+    // Only overwrite placeholder/smaller values with the real fetched duration
+    if (rows[0].duration < duration) {
+      await db.update(videosTable).set({ duration }).where(eq(videosTable.id, id));
+    }
+    return res.json({ ok: true, duration });
+  } catch {
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
 router.delete("/videos/:id", authMiddleware, adminMiddleware, async (req: AuthRequest, res) => {
   try {
     const id = parseInt(req.params.id);
