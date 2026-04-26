@@ -1,50 +1,43 @@
 import { Router } from "express";
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
-import { join, dirname } from "path";
+import { db } from "@workspace/db";
+import { studentRequestsTable } from "@workspace/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { authMiddleware, adminMiddleware, type AuthRequest } from "../lib/auth";
 
 const router = Router();
-const REQUESTS_FILE = join(process.cwd(), "data", "student_requests.json");
-
-type LessonRequest = { id: string; text: string; userId: number; email?: string; date: string };
-
-function loadRequests(): LessonRequest[] {
-  if (!existsSync(REQUESTS_FILE)) return [];
-  try { return JSON.parse(readFileSync(REQUESTS_FILE, "utf-8")); } catch { return []; }
-}
-
-function saveRequests(requests: LessonRequest[]) {
-  mkdirSync(dirname(REQUESTS_FILE), { recursive: true });
-  writeFileSync(REQUESTS_FILE, JSON.stringify(requests, null, 2));
-}
 
 // Any authenticated user can submit a lesson request
 router.post("/requests", authMiddleware, async (req: AuthRequest, res) => {
   try {
     const { text, email } = req.body;
     if (!text?.trim()) return res.status(400).json({ error: "Request text required" });
-    const requests = loadRequests();
-    const entry: LessonRequest = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      text: text.trim(),
+
+    const [inserted] = await db.insert(studentRequestsTable).values({
       userId: req.userId!,
-      email: email || "",
-      date: new Date().toISOString(),
-    };
-    requests.unshift(entry);
-    saveRequests(requests);
-    return res.json({ ok: true, id: entry.id });
+      email: email?.trim() || "",
+      text: text.trim(),
+    }).returning();
+
+    return res.json({ ok: true, id: inserted.id });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Server error" });
   }
 });
 
-// Admin-only: view all requests
+// Admin-only: view all requests, newest first
 router.get("/requests", authMiddleware, adminMiddleware, async (_req, res) => {
   try {
-    return res.json(loadRequests());
-  } catch {
+    const requests = await db.select().from(studentRequestsTable).orderBy(desc(studentRequestsTable.createdAt));
+    return res.json(requests.map(r => ({
+      id: String(r.id),
+      text: r.text,
+      userId: r.userId,
+      email: r.email,
+      date: r.createdAt.toISOString(),
+    })));
+  } catch (err) {
+    console.error(err);
     return res.status(500).json({ error: "Server error" });
   }
 });
@@ -52,8 +45,10 @@ router.get("/requests", authMiddleware, adminMiddleware, async (_req, res) => {
 // Admin: delete a request
 router.delete("/requests/:id", authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const requests = loadRequests().filter(r => r.id !== req.params.id);
-    saveRequests(requests);
+    const id = parseInt(req.params.id);
+    if (!isNaN(id)) {
+      await db.delete(studentRequestsTable).where(eq(studentRequestsTable.id, id));
+    }
     return res.json({ ok: true });
   } catch {
     return res.status(500).json({ error: "Server error" });

@@ -173,7 +173,7 @@ router.post("/subscription/create", authMiddleware, async (req: AuthRequest, res
       invoiceUrl: invoice?.invoice_url || null,
       paymentUrl: invoice?.invoice_url || null,
       paymentAddress: walletAddr,
-      network: network === "polygon" ? "Polygon (ERC-20)" : "Tron (TRC20)",
+      network: network === "polygon" ? "Polygon Network" : "Tron (TRC20)",
       networkKey: network,
       amount: SUBSCRIPTION_PRICE_USD,
       currency: "USDT",

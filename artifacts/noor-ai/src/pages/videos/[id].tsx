@@ -492,75 +492,46 @@ export default function VideoPlayer() {
           {/* ─── LEFT: Video + Meta ─── */}
           <div className="flex-1 min-w-0 space-y-4" dir="auto">
 
-            {/* 16:9 Video container — clean, no black bars */}
-            <div
-              className="relative w-full rounded-xl overflow-hidden shadow-xl border border-border/50"
-              style={{ aspectRatio: "16/9", background: "transparent" }}
-            >
-              {/* YouTube IFrame target */}
-              <div id={`yt-player-${videoId}`} className="absolute inset-0 w-full h-full" />
-
-              {/*
-                YouTube Brand Suppression — pointer-events:none approach:
-                These divs visually obscure YouTube branding areas without
-                blocking any player interaction (play/pause/seek/volume).
-                All elements use pointer-events:none so the player beneath remains fully interactive.
-              */}
-
-              {/* Top gradient — hides channel name & title that appear on hover */}
+            {/* 16:9 Video container — standard YouTube-like, centered */}
+            <div className="flex justify-center">
               <div
-                className="absolute top-0 left-0 right-0 z-20"
-                style={{
-                  height: "56px",
-                  background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%)",
-                  pointerEvents: "none",
-                }}
-              />
+                className="relative w-full rounded-xl overflow-hidden shadow-xl border border-border/50"
+                style={{ aspectRatio: "16/9", maxWidth: "854px", background: "transparent" }}
+              >
+                {/* YouTube IFrame target */}
+                <div id={`yt-player-${videoId}`} className="absolute inset-0 w-full h-full" />
 
-              {/* Top-right corner — masks YouTube watermark logo */}
-              <div
-                className="absolute top-0 right-0 z-30"
-                style={{
-                  width: "100px",
-                  height: "40px",
-                  background: "linear-gradient(to bottom-left, rgba(0,0,0,0.6) 0%, transparent 100%)",
-                  pointerEvents: "none",
-                }}
-              />
+                {/* Top gradient — hides channel name & title that appear on hover */}
+                <div
+                  className="absolute top-0 left-0 right-0 z-20"
+                  style={{
+                    height: "56px",
+                    background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%)",
+                    pointerEvents: "none",
+                  }}
+                />
 
-              {/* Bottom-right corner — masks "Watch on YouTube" link
-                  Uses a dark gradient that blends with YouTube's control bar colour */}
-              <div
-                className="absolute bottom-0 right-0 z-30"
-                style={{
-                  width: "200px",
-                  height: "46px",
-                  background: "linear-gradient(to top-left, rgba(0,0,0,0.72) 0%, transparent 100%)",
-                  pointerEvents: "none",
-                }}
-              />
+                {/* Top-right corner — masks YouTube watermark logo */}
+                <div
+                  className="absolute top-0 right-0 z-30"
+                  style={{
+                    width: "100px",
+                    height: "40px",
+                    background: "linear-gradient(to bottom-left, rgba(0,0,0,0.6) 0%, transparent 100%)",
+                    pointerEvents: "none",
+                  }}
+                />
 
-              {/* Progress checkpoint dots — above the player, below nothing */}
-              <div className="absolute bottom-[46px] left-0 right-0 h-[4px] z-40 pointer-events-none">
-                {duration > 0 && activeCheckpoints.map(cp => {
-                  if (!cp.timestampSeconds) return null;
-                  const result = checkpointResults[cp.id];
-                  const pct = Math.min((cp.timestampSeconds / duration) * 100, 100);
-                  return (
-                    <div
-                      key={cp.id}
-                      className={cn(
-                        "absolute top-0 w-[6px] h-full -translate-x-1/2 rounded-full",
-                        result === "correct"
-                          ? "bg-green-400 shadow-[0_0_8px_2px_rgba(74,222,128,0.9)]"
-                          : result === "skipped"
-                          ? "bg-gray-400"
-                          : "bg-primary"
-                      )}
-                      style={{ left: `${pct}%` }}
-                    />
-                  );
-                })}
+                {/* Bottom-right corner — masks "Watch on YouTube" link */}
+                <div
+                  className="absolute bottom-0 right-0 z-30"
+                  style={{
+                    width: "200px",
+                    height: "46px",
+                    background: "linear-gradient(to top-left, rgba(0,0,0,0.72) 0%, transparent 100%)",
+                    pointerEvents: "none",
+                  }}
+                />
               </div>
             </div>
 

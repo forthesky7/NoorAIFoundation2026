@@ -1,0 +1,43 @@
+"I need a final, structural fix for my platform. Execute these 5 critical modules simultaneously. Do not ignore any point.
+
+1. Logical Sorting & Indexing (The Priority Fix):
+Rebuild the sorting engine to follow a 'Group-First, Episode-Second' logic. Currently, the system mixes 'Episode 1' from different teachers/subjects.
+
+Correct Logic: Sort by (Main Category -> Teacher/Subject Group -> Episode Number).
+
+Specific Fixes:
+
+Ehab Abdelazim (02.): Finish ALL [لفظي] episodes 1-10, THEN all [تدريب] episodes, THEN [نماذج], THEN [قطع]. Do NOT mix Episode 1 of 'لفظي' with Episode 1 of 'قطع'.
+
+Masarat (Math/Physics): Group by Chapter/Teacher first (e.g., ALL 'أول ثانوي' episodes together, then ALL 'واضح' episodes together).
+
+General (00.): Sort the 7 videos strictly by episode number 1 to 7.
+
+Missing Content: Insert '01. [كمي] دورات القدرات: الأعداد الأولية - حلقة 6' strictly between Episode 5 and 7.
+
+Student View: For a new student, the 'Recent Videos' section should show 'دورات القدرات' episodes in sequence (1, 2, 3...) instead of the Admin's watch history. Total Session Isolation.
+
+2. Financial & Payment Fix (Security):
+
+Correct Network: Replace the 'ERC20' label for Polygon with the correct 'Polygon Network' label.
+
+3. UI/UX & Player Clean-up:
+
+Video Player: Shrink the video player size to be standard (YouTube-like) and center it.
+
+Clean Display: Use CSS to permanently remove the blue/small dots inside the video container.
+
+True Duration: Implement a script to fetch the actual video length from YouTube. Fix the '5 minutes' placeholder once and for all.
+
+Branding: Place the Telegram link https://t.me/NoorAi_Education in the Footer with the text 'تابعنا لمزيد من الأخبار'.
+
+Frames: Wrap the text 'اسأل مساعد الأستاذ الذكي' (under each library video) in a styled, professional border.
+
+Expand Chat: Add a 'Maximize/Expand' button to the 'NOOR' chat window during video playback.
+
+4. Admin Panel & Data Integrity:
+
+Data Retention: Fix the 'Request a Lesson' feature. Data must be saved in a permanent database table (Admin Dashboard) and must not disappear after submission.
+
+Scroll Memory: Ensure that clicking or watching a video does NOT refresh the page or scroll it back to the top. Keep the user’s position in the list.                                                                                                                               
+                                                                                                                         Execute these changes now. I have a limited budget and need this to be 100% functional today."

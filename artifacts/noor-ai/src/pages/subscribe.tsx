@@ -86,7 +86,7 @@ export default function Subscribe() {
 
   const networkLabel = (n: CryptoNetwork) => n === "trc20"
     ? (lang === "ar" ? "Tron (TRC20)" : "Tron (TRC20)")
-    : (lang === "ar" ? "Polygon (ERC-20)" : "Polygon (ERC-20)");
+    : (lang === "ar" ? "شبكة Polygon" : "Polygon Network");
 
   return (
     <AppLayout>
@@ -256,7 +256,7 @@ export default function Subscribe() {
               <div className="flex items-center justify-center gap-2">
                 <span className="text-xs bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded-full font-medium flex items-center gap-1.5">
                   <Network className="h-3 w-3" />
-                  {paymentInfo.networkKey === "polygon" ? "Polygon (ERC-20)" : "Tron (TRC20)"}
+                  {paymentInfo.networkKey === "polygon" ? (lang === "ar" ? "شبكة Polygon" : "Polygon Network") : "Tron (TRC20)"}
                 </span>
               </div>
 
