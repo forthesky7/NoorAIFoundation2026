@@ -8,10 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { PlayCircle, Search, FilterX, Lock, Send, CheckCircle2, MessageSquareDot } from "lucide-react";
 import { Link } from "wouter";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useLang, DEFAULT_CATEGORIES, getCategoryLabel } from "@/lib/language";
 import { useAuth } from "@/hooks/use-auth";
 import { apiClient } from "@/lib/api";
+import { sortVideos, fuzzyMatch } from "@/lib/videoSort";
 
 function formatDuration(seconds: number): string {
   if (!seconds || seconds <= 0) return "--:--";
@@ -22,84 +23,6 @@ function formatDuration(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-// Fuzzy match: every word in the query must appear somewhere in the target
-function fuzzyMatch(query: string, target: string): boolean {
-  if (!query.trim()) return true;
-  const words = query.trim().toLowerCase().split(/\s+/);
-  const t = target.toLowerCase();
-  return words.every(w => t.includes(w));
-}
-
-// ─── Sorting Engine: Group-First, Episode-Second ────────────────────────────
-// Sort key: Category → Prefix group → Sub-type within group → Episode number
-
-const CATEGORY_ORDER: Record<string, number> = {
-  Qudurat: 0,
-  Tahsili: 1,
-  Secondary: 2,
-  General: 3,
-};
-
-// Numeric prefix: "01." → 1, "02." → 2, "00." → 0, no prefix → 999
-function extractPrefix(title: string): number {
-  const m = title.match(/^(\d{1,2})\./);
-  return m ? parseInt(m[1], 10) : 999;
-}
-
-// Sub-type ordering within a prefix group
-// 02. (إيهاب عبد العظيم): لفظي → تدريب → نماذج → قطع
-// 01. (دورات القدرات):    كمي  → لفظي  → others
-function extractSubType(title: string, prefix: number): number {
-  if (prefix === 2) {
-    // Ehab Abdelazim — MUST complete ALL episodes of each sub-type before moving to next
-    if (/لفظي/.test(title)) return 0;
-    if (/تدريب/.test(title)) return 1;
-    if (/نماذج/.test(title)) return 2;
-    if (/قطع/.test(title)) return 3;
-    return 4;
-  }
-  if (prefix === 1) {
-    // دورات القدرات: كمي first, then لفظي, then others
-    if (/كمي/.test(title)) return 0;
-    if (/لفظي/.test(title)) return 1;
-    return 2;
-  }
-  // Any other prefix (incl. 00. General): no sub-type split
-  return 0;
-}
-
-// Extract episode number: حلقة X or Episode X; مقدمة = 0
-function extractEpisode(title: string): number {
-  const arM = title.match(/حلقة\s*(\d+)/);
-  if (arM) return parseInt(arM[1], 10);
-  const enM = title.match(/episode\s*(\d+)/i);
-  if (enM) return parseInt(enM[1], 10);
-  if (/مقدمة/.test(title)) return 0;
-  return 999;
-}
-
-function sortVideos(videos: any[]): any[] {
-  return [...videos].sort((a, b) => {
-    // 1. Category group
-    const catA = CATEGORY_ORDER[a.subject] ?? 9;
-    const catB = CATEGORY_ORDER[b.subject] ?? 9;
-    if (catA !== catB) return catA - catB;
-
-    // 2. Prefix number (teacher/subject group)
-    const preA = extractPrefix(a.title);
-    const preB = extractPrefix(b.title);
-    if (preA !== preB) return preA - preB;
-
-    // 3. Sub-type within group (e.g. لفظي before تدريب for Ehab)
-    const stA = extractSubType(a.title, preA);
-    const stB = extractSubType(b.title, preB);
-    if (stA !== stB) return stA - stB;
-
-    // 4. Episode number
-    return extractEpisode(a.title) - extractEpisode(b.title);
-  });
-}
-
 const SCROLL_KEY = "noor_library_scroll";
 
 export default function Videos() {
@@ -108,7 +31,6 @@ export default function Videos() {
   const isSubscribed = user?.subscribed || user?.role === "admin";
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("all");
-  const listRef = useRef<HTMLDivElement>(null);
 
   const [suggestionText, setSuggestionText] = useState("");
   const [suggestionSubmitted, setSuggestionSubmitted] = useState(false);
@@ -119,7 +41,7 @@ export default function Videos() {
     { query: { queryKey: getListVideosQueryKey() } }
   );
 
-  // Restore scroll position when returning to library
+  // Restore scroll position when returning from video player
   useEffect(() => {
     const saved = sessionStorage.getItem(SCROLL_KEY);
     if (saved) {
@@ -131,22 +53,22 @@ export default function Videos() {
     }
   }, []);
 
-  // Save scroll position when user clicks a video card
   const saveScrollPosition = () => {
     sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
   };
 
-  const sortedVideos = videos ? sortVideos(videos) : [];
+  const sorted = videos ? sortVideos(videos) : [];
 
-  const filteredVideos = sortedVideos.filter(v => {
-    const searchTarget = `${v.title} ${v.description || ""} ${v.subject}`;
-    const matchSearch = !search || fuzzyMatch(search, searchTarget);
-    const matchCategory = category === "all" || v.subject === category;
-    return matchSearch && matchCategory;
+  const filtered = sorted.filter(v => {
+    const target = `${v.title} ${v.description || ""} ${v.subject}`;
+    return (
+      (!search || fuzzyMatch(search, target)) &&
+      (category === "all" || v.subject === category)
+    );
   });
 
   const clearFilters = () => { setSearch(""); setCategory("all"); };
-  const hasFilters = search || category !== "all";
+  const hasFilters = !!search || category !== "all";
 
   const handleSuggestion = async () => {
     if (!suggestionText.trim()) return;
@@ -188,7 +110,7 @@ export default function Videos() {
             <Input
               placeholder={t.searchLessons}
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
               className={lang === "ar" ? "pr-9 text-right" : "pl-9"}
             />
           </div>
@@ -215,27 +137,30 @@ export default function Videos() {
         </div>
 
         {/* Videos Grid */}
-        <div ref={listRef}>
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5, 6].map(i => (
-                <div key={i} className="flex flex-col gap-3">
-                  <Skeleton className="w-full aspect-video rounded-xl" />
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-9 w-full rounded-lg" />
-                </div>
-              ))}
-            </div>
-          ) : filteredVideos && filteredVideos.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredVideos.map(video => isSubscribed ? (
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="flex flex-col gap-3">
+                <Skeleton className="w-full aspect-video rounded-xl" />
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            ))}
+          </div>
+        ) : filtered.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map(video =>
+              isSubscribed ? (
                 <div key={video.id} onClick={saveScrollPosition}>
                   <Link href={`/videos/${video.id}`}>
-                    <Card className="overflow-hidden flex flex-col hover-elevate transition-all border-border/50 group cursor-pointer hover:border-primary/40 hover:shadow-md">
+                    <Card className="overflow-hidden flex flex-col hover-elevate transition-all border-border/50 group cursor-pointer hover:border-primary/40 hover:shadow-md h-full">
                       <div className="relative aspect-video bg-muted overflow-hidden">
                         {video.thumbnailUrl ? (
-                          <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          <img
+                            src={video.thumbnailUrl}
+                            alt={video.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-secondary/50 text-muted-foreground">
                             <PlayCircle className="h-10 w-10 opacity-50" />
@@ -252,14 +177,14 @@ export default function Videos() {
                         <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md self-start">
                           {getCategoryLabel(video.subject, lang)}
                         </span>
-                        <h3 className="font-semibold text-base line-clamp-2">{video.title}</h3>
-                        {video.description && <p className="text-sm text-muted-foreground line-clamp-2">{video.description}</p>}
-                        {/* Styled "ask Noor" label */}
-                        <div className="mt-auto">
-                          <div className="border border-primary/25 bg-primary/5 rounded-lg px-3 py-2 flex items-center gap-2 text-primary text-xs font-medium">
-                            <MessageSquareDot className="h-3.5 w-3.5 shrink-0" />
-                            <span>{lang === "ar" ? "اسأل مساعد الأستاذ الذكي" : "Ask the AI Smart Assistant"}</span>
-                          </div>
+                        <h3 className="font-semibold text-base line-clamp-2 flex-1">{video.title}</h3>
+                        {video.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2">{video.description}</p>
+                        )}
+                        {/* "Ask Noor" styled frame */}
+                        <div className="mt-auto border border-primary/25 bg-primary/5 rounded-lg px-3 py-2 flex items-center gap-2 text-primary text-xs font-medium">
+                          <MessageSquareDot className="h-3.5 w-3.5 shrink-0" />
+                          <span>{lang === "ar" ? "اسأل مساعد الأستاذ الذكي" : "Ask the AI Smart Assistant"}</span>
                         </div>
                       </CardContent>
                     </Card>
@@ -268,10 +193,14 @@ export default function Videos() {
               ) : (
                 <div key={video.id} onClick={saveScrollPosition}>
                   <Link href="/subscribe">
-                    <Card className="overflow-hidden flex flex-col transition-all border-border/50 group cursor-pointer hover:border-primary/60 hover:shadow-md">
+                    <Card className="overflow-hidden flex flex-col transition-all border-border/50 group cursor-pointer hover:border-primary/60 hover:shadow-md h-full">
                       <div className="relative aspect-video bg-muted overflow-hidden">
                         {video.thumbnailUrl ? (
-                          <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-50 transition-opacity" />
+                          <img
+                            src={video.thumbnailUrl}
+                            alt={video.title}
+                            className="w-full h-full object-cover opacity-60 group-hover:opacity-50 transition-opacity"
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-secondary/50 text-muted-foreground">
                             <PlayCircle className="h-10 w-10 opacity-30" />
@@ -290,29 +219,27 @@ export default function Videos() {
                         <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md self-start">
                           {getCategoryLabel(video.subject, lang)}
                         </span>
-                        <h3 className="font-semibold text-base line-clamp-2 text-muted-foreground">{video.title}</h3>
-                        <div className="mt-auto">
-                          <div className="w-full h-9 bg-primary rounded-lg flex items-center justify-center gap-2 text-primary-foreground text-xs font-semibold group-hover:bg-primary/90 transition-colors">
-                            {lang === "ar" ? "فعّل الاشتراك — 5$/شهر" : "Unlock Premium — $5/mo"}
-                          </div>
+                        <h3 className="font-semibold text-base line-clamp-2 text-muted-foreground flex-1">{video.title}</h3>
+                        <div className="mt-auto w-full h-9 bg-primary rounded-lg flex items-center justify-center gap-2 text-primary-foreground text-xs font-semibold group-hover:bg-primary/90 transition-colors">
+                          {lang === "ar" ? "فعّل الاشتراك — 5$/شهر" : "Unlock Premium — $5/mo"}
                         </div>
                       </CardContent>
                     </Card>
                   </Link>
                 </div>
-              ))}
+              )
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-24 bg-card rounded-2xl border border-dashed">
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
+              <Search className="h-8 w-8 text-muted-foreground" />
             </div>
-          ) : (
-            <div className="text-center py-24 bg-card rounded-2xl border border-dashed">
-              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
-                <Search className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">{t.noVideos}</h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">{t.noVideosDesc}</p>
-              <Button onClick={clearFilters} variant="outline">{t.clearFilters}</Button>
-            </div>
-          )}
-        </div>
+            <h3 className="text-xl font-semibold mb-2">{t.noVideos}</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">{t.noVideosDesc}</p>
+            <Button onClick={clearFilters} variant="outline">{t.clearFilters}</Button>
+          </div>
+        )}
 
         {/* Lesson Request Form */}
         <div className="mt-16 border rounded-2xl p-8 bg-card shadow-sm">
