@@ -11,7 +11,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Brain, Play, Send, Lock, AlertTriangle, CheckCircle2, Circle, Clock } from "lucide-react";
+import { Brain, Play, Send, Lock, AlertTriangle, CheckCircle2, Circle, Clock, Maximize2, Minimize2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/language";
@@ -127,6 +127,7 @@ export default function VideoPlayer() {
 
   const [freeChatMessage, setFreeChatMessage] = useState("");
   const [freeChatHistory, setFreeChatHistory] = useState<Message[]>([]);
+  const [chatExpanded, setChatExpanded] = useState(false);
 
   const { data: video, isLoading: videoLoading } = useGetVideo(videoId, {
     query: { enabled: !!videoId, queryKey: getGetVideoQueryKey(videoId) }
@@ -205,6 +206,8 @@ export default function VideoPlayer() {
             // Persist real duration to DB so list views show it correctly
             apiClient.patch(`/videos/${videoId}/duration`, { duration: secs }).catch(() => {});
           }
+          // Force HD quality
+          try { e.target.setPlaybackQuality("hd720"); } catch {}
         },
         onStateChange: onPlayerStateChange,
       },
@@ -288,7 +291,7 @@ export default function VideoPlayer() {
     const updated = [...chatHistory, { role: "user" as const, content: userMsg }];
     setChatHistory(updated);
     sendMessageMutation.mutate(
-      { data: { message: userMsg, videoId, checkpointId: currentCheckpoint.id > 0 ? currentCheckpoint.id : undefined, history: updated } },
+      { data: { message: userMsg, videoId, checkpointId: currentCheckpoint.id > 0 ? currentCheckpoint.id : undefined, history: updated, ...(video?.title ? { videoTitle: video.title } : {}) } as any },
       {
         onSuccess: (res) => {
           setChatHistory([...updated, { role: "assistant", content: res.reply }]);
@@ -326,7 +329,7 @@ export default function VideoPlayer() {
     const updated = [...freeChatHistory, { role: "user" as const, content: userMsg }];
     setFreeChatHistory(updated);
     freeChatMutation.mutate(
-      { data: { message: userMsg, videoId, history: updated } },
+      { data: { message: userMsg, videoId, history: updated, ...(video?.title ? { videoTitle: video.title } : {}) } as any },
       {
         onSuccess: (res) => setFreeChatHistory([...updated, { role: "assistant", content: res.reply }]),
         onError: () => setFreeChatHistory([...updated, { role: "assistant", content: lang === "ar" ? "عذراً، حدث خطأ." : "Sorry, an error occurred." }]),
@@ -646,16 +649,28 @@ export default function VideoPlayer() {
             </div>
 
             {/* Noor AI Chat Panel */}
-            <div className="flex flex-col rounded-xl border bg-card shadow-sm overflow-hidden" style={{ height: "calc(100vh - 440px)", minHeight: "300px" }}>
+            <div
+              className={`flex flex-col rounded-xl border bg-card shadow-sm overflow-hidden transition-all duration-300 ${chatExpanded ? "fixed inset-4 z-50 shadow-2xl" : ""}`}
+              style={chatExpanded ? {} : { height: "calc(100vh - 440px)", minHeight: "300px" }}
+            >
               <div className="flex items-center gap-3 px-4 py-3 border-b bg-gradient-to-r from-primary/8 to-transparent shrink-0">
                 <NoorAvatar size={30} />
-                <div>
+                <div className="flex-1">
                   <div className="font-semibold text-sm">{lang === "ar" ? "نُور AI — معلمك الذكي" : "Noor AI — Smart Tutor"}</div>
                   <div className="text-xs text-green-600 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                     {lang === "ar" ? "متصل ومستعد" : "Online"}
                   </div>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
+                  onClick={() => setChatExpanded(p => !p)}
+                  title={chatExpanded ? (lang === "ar" ? "تصغير" : "Collapse") : (lang === "ar" ? "توسيع" : "Expand")}
+                >
+                  {chatExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                </Button>
               </div>
 
               <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-muted/5">

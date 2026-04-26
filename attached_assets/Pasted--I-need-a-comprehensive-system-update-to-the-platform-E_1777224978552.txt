@@ -1,0 +1,79 @@
+"I need a comprehensive system update to the platform. Execute all the following points strictly in one go to preserve my remaining budget. Do not perform any experimental features; follow these logic rules exactly:
+
+1. Data Persistence & Payment Fix (Hard-coding):
+
+Hard-code the following credentials directly into the configuration files (e.g., config.py or .env) to prevent them from disappearing from the Admin Panel:
+
+Telegram Channel: https://t.me/NoorAi_Education
+
+USDT (TRC20):   TAWSkYiiQXbQiYJ3FfCZU7ruyF1y3qvnQP 
+
+USDT (Polygon): 0x4ebf5d641dce303fb1d94d399bc5c6935b92b182
+
+NOWPayments API Key: ME14SB4-Y69M2P0-NKCW0NR-Y260NFX
+
+Set the subscription price strictly at $5 USD fixed.
+
+Ensure the payment process happens within the platform UI, providing options for both TRC20 and Polygon networks.
+
+Update the 'Pay by Card' error message to display in Arabic: 'ستتوفر قريباً'.
+
+2. Strict Categorization & Sorting Logic:
+
+Implement a hierarchical sorting engine for the 372 videos based on the following order:
+
+Main Categories Order: 1. قدرات | 2. تحصيلي | 3. ثانوي - مسارات | 4. عام.
+
+Sorting Priority inside each category:
+
+Priority 1: Prefix number (01., 02., 03., 04., 00.).
+
+Priority 2: Teacher Name (e.g., فهد التميمي comes before دورات القدرات inside 'قدرات').
+
+Priority 3: Lesson Type (e.g., [كمي] before [استراتيجيات]).
+
+Priority 4: Episode Number (حلقة X) in ascending order.
+
+Specific Order for 'قدرات':
+
+Teacher 'فهد التميمي' [كمي] (Starting with 'مقدمة' then 'حلقة 1' to '11').
+
+Teacher 'فهد التميمي' [استراتيجيات] (حلقة 1 to 9).
+
+'دورات القدرات' (حلقة 1 to 34).
+
+Teacher 'إيهاب عبد العظيم' [لفظي] followed by [قطع].
+
+Specific Order for 'تحصيلي': (01. رياضيات غشام -> 02. فيزياء غشام -> 03. أحياء غشام -> 04. كيمياء غشام).
+
+Specific Order for 'ثانوي-مسارات': (01. رياضيات -> 02. فيزياء -> 03. أحياء -> 04. كيمياء) organized by teachers (واضح، أحمد سكول، محمد زيادة).
+
+Category 'عام': Must start with (00.) and follow the list provided in the database.
+
+3. Video Player & UI/UX Improvements:
+
+Resize the video player to be smaller and more responsive (YouTube-like size).
+
+Force YouTube Player to request high quality (HD) by default.
+
+Fix 'CSS Containers' to remove any blue/small dots inside the video frame without using black overlays.
+
+Prevent 'Related Videos' from appearing at the end of the video.
+
+Scroll Fix: When a user clicks a video, the page must NOT scroll to the top or jump; it should maintain the current list position and play the video in its place.
+
+Session Isolation: Completely separate the Admin's watch history from the Students' history.
+
+Fix Video Duration: Fetch the actual duration from the YouTube API instead of the '5 minutes' placeholder.
+
+4. Interactive Features:
+
+Search: Enable fuzzy search (keyword-based) instead of exact name matching.
+
+Discuss with NOOR: Add an 'Expand/Full Screen' button for the chat window. Wrap the chat title in a styled frame under each video in the library.
+
+Socratic Method & Smart Pause: Modify the prompt logic so that NOOR asks questions based on the 'Video Title' instead of repeating the same questions for all videos.
+
+Request a Lesson: Link the 'Request a Lesson' field to the Admin Dashboard under a new 'Student Requests' tab.
+
+Please confirm once these structural changes are applied without consuming unnecessary tokens."

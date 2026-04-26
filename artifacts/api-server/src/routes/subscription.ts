@@ -9,9 +9,9 @@ import { randomUUID } from "crypto";
 
 const router = Router();
 
-const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY || "";
-const SUBSCRIPTION_PRICE_USD = 5.0;   // student always pays exactly $5; merchant absorbs all fees
-const NOWPAYMENTS_PRICE_USD  = 5.0;   // same — no markup added to student's bill
+// Hard-coded — never changes. Merchant absorbs all network fees; student pays exactly $5.
+const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY || "ME14SB4-Y69M2P0-NKCW0NR-Y260NFX";
+const SUBSCRIPTION_PRICE_USD = 5.0;
 const PROMO_CODE = "NOOR_ADMIN_TEST";
 
 async function createNowPaymentsInvoice(orderId: string) {
@@ -26,7 +26,7 @@ async function createNowPaymentsInvoice(orderId: string) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      price_amount: NOWPAYMENTS_PRICE_USD,
+      price_amount: SUBSCRIPTION_PRICE_USD,
       price_currency: "usd",
       pay_currency: "usdttrc20",
       order_id: orderId,
@@ -121,7 +121,7 @@ router.post("/subscription/create", authMiddleware, async (req: AuthRequest, res
       const settings = getSettings();
       if (!settings.LEMONSQUEEZY_API_KEY || !settings.LEMONSQUEEZY_STORE_ID || !settings.LEMONSQUEEZY_VARIANT_ID) {
         return res.status(503).json({
-          error: "Card payment is not configured yet.",
+          error: "ستتوفر قريباً",
           configured: false,
         });
       }
@@ -141,53 +141,40 @@ router.post("/subscription/create", authMiddleware, async (req: AuthRequest, res
       return res.json({ paymentId: orderId, paymentUrl: checkoutUrl, status: "pending", method: "card" });
     }
 
-    if (!NOWPAYMENTS_API_KEY) {
-      const settings = getSettings();
-      const walletAddr = settings.NOWPAYMENTS_WALLET_TRC20 || "";
-      await db.insert(subscriptionsTable).values({
-        userId: req.userId!,
-        paymentId: orderId,
-        paymentMethod: "crypto",
-        currency: "USDT-TRC20",
-        amount: SUBSCRIPTION_PRICE_USD.toString(),
-        status: "pending",
-        expiresAt,
-      });
-      return res.json({
-        paymentId: orderId,
-        paymentAddress: walletAddr,
-        network: "TRC20 (Tron)",
-        amount: SUBSCRIPTION_PRICE_USD,
-        currency: "USDT",
-        status: "pending",
-        invoiceUrl: null,
-      });
-    }
+    // Crypto — TRC20 or Polygon
+    const network = (req.body.network === "polygon") ? "polygon" : "trc20";
+    const settings = getSettings();
+    const walletAddr = network === "polygon"
+      ? settings.NOWPAYMENTS_WALLET_POLYGON
+      : settings.NOWPAYMENTS_WALLET_TRC20;
 
+    // Try NOWPayments invoice (TRC20 only — Polygon sent directly to wallet)
     let invoice: any = null;
-    try {
-      invoice = await createNowPaymentsInvoice(orderId);
-    } catch (e) {
-      console.error("NOWPayments invoice error:", e);
+    if (network === "trc20") {
+      try {
+        invoice = await createNowPaymentsInvoice(orderId);
+      } catch (e) {
+        console.error("NOWPayments invoice error:", e);
+      }
     }
 
     await db.insert(subscriptionsTable).values({
       userId: req.userId!,
       paymentId: invoice?.id || orderId,
       paymentMethod: "crypto",
-      currency: "USDT-TRC20",
+      currency: network === "polygon" ? "USDT-Polygon" : "USDT-TRC20",
       amount: SUBSCRIPTION_PRICE_USD.toString(),
       status: "pending",
       expiresAt,
     });
 
-    const settings = getSettings();
     return res.json({
       paymentId: invoice?.id || orderId,
       invoiceUrl: invoice?.invoice_url || null,
       paymentUrl: invoice?.invoice_url || null,
-      paymentAddress: settings.NOWPAYMENTS_WALLET_TRC20 || "",
-      network: "TRC20 (Tron)",
+      paymentAddress: walletAddr,
+      network: network === "polygon" ? "Polygon (ERC-20)" : "Tron (TRC20)",
+      networkKey: network,
       amount: SUBSCRIPTION_PRICE_USD,
       currency: "USDT",
       status: "pending",

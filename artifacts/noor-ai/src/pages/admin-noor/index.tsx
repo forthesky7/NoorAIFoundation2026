@@ -17,7 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import {
   PlayCircle, Users, CreditCard, Plus, Trash2, Link2, Upload,
-  CheckCircle2, AlertCircle, Search, UserCheck, Send, Settings, Tag, X
+  CheckCircle2, AlertCircle, Search, UserCheck, Send, Settings, Tag, X, MessageSquare, Clock
 } from "lucide-react";
 import { apiClient } from "@/lib/api";
 
@@ -42,6 +42,7 @@ const CATEGORIES = [
 
 type BulkStatus = { url: string; status: "pending" | "success" | "error"; message?: string };
 type AdminUser = { id: number; name: string; email: string; role: string; subscribed: boolean; createdAt: string };
+type LessonRequest = { id: string; text: string; userId: number; email?: string; date: string };
 
 export default function AdminNoor() {
   const { t, lang } = useLang();
@@ -63,6 +64,27 @@ export default function AdminNoor() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [activatingId, setActivatingId] = useState<number | null>(null);
+
+  // Student Requests
+  const [requests, setRequests] = useState<LessonRequest[]>([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+  const [deletingRequestId, setDeletingRequestId] = useState<string | null>(null);
+
+  const fetchRequests = async () => {
+    setRequestsLoading(true);
+    try {
+      const res = await apiClient.get("/requests");
+      if (res.ok) setRequests(await res.json());
+    } catch { /* ignore */ }
+    setRequestsLoading(false);
+  };
+
+  const handleDeleteRequest = async (id: string) => {
+    setDeletingRequestId(id);
+    await apiClient.delete(`/requests/${id}`).catch(() => {});
+    setRequests(prev => prev.filter(r => r.id !== id));
+    setDeletingRequestId(null);
+  };
 
   // Telegram link
   const [telegramLink, setTelegramLink] = useState(() => localStorage.getItem("noor_telegram_link") || "");
@@ -124,7 +146,7 @@ export default function AdminNoor() {
     setUsersLoading(false);
   };
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => { fetchUsers(); fetchRequests(); }, []);
 
   useEffect(() => {
     apiClient.get("/admin/settings").then(async r => {
@@ -677,6 +699,58 @@ export default function AdminNoor() {
               </CardContent>
             </Card>
           )}
+
+          {/* Student Requests */}
+          <div className="mt-10">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-primary" />
+                {lang === "ar" ? "طلبات الطلاب" : "Student Requests"}
+                {requests.length > 0 && (
+                  <Badge className="bg-primary text-primary-foreground">{requests.length}</Badge>
+                )}
+              </h2>
+              <Button variant="outline" size="sm" onClick={fetchRequests}>
+                {lang === "ar" ? "تحديث" : "Refresh"}
+              </Button>
+            </div>
+            {requestsLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 rounded-lg" />)}
+              </div>
+            ) : requests.length === 0 ? (
+              <div className="text-center py-10 text-muted-foreground border rounded-lg bg-card">
+                <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">{lang === "ar" ? "لا توجد طلبات بعد" : "No requests yet"}</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {requests.map(r => (
+                  <div key={r.id} className="flex items-start gap-4 bg-card border rounded-lg p-4 shadow-sm">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium break-words">{r.text}</p>
+                      <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
+                        {r.email && <span className="font-mono">{r.email}</span>}
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {new Date(r.date).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US")}
+                        </span>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+                      onClick={() => handleDeleteRequest(r.id)}
+                      disabled={deletingRequestId === r.id}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Video Table */}
           <div className="bg-card border rounded-lg overflow-hidden">

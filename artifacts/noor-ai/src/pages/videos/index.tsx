@@ -11,6 +11,7 @@ import { Link } from "wouter";
 import { useState } from "react";
 import { useLang, DEFAULT_CATEGORIES, getCategoryLabel } from "@/lib/language";
 import { useAuth } from "@/hooks/use-auth";
+import { apiClient } from "@/lib/api";
 
 function formatDuration(seconds: number): string {
   if (!seconds || seconds <= 0) return "--:--";
@@ -19,6 +20,84 @@ function formatDuration(seconds: number): string {
   const s = seconds % 60;
   if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+// Fuzzy match: every word in the query must appear somewhere in the target
+function fuzzyMatch(query: string, target: string): boolean {
+  if (!query.trim()) return true;
+  const words = query.trim().toLowerCase().split(/\s+/);
+  const t = target.toLowerCase();
+  return words.every(w => t.includes(w));
+}
+
+// Category sort order: قدرات → تحصيلي → ثانوي → عام → others
+const CATEGORY_ORDER: Record<string, number> = {
+  Qudurat: 0,
+  Tahsili: 1,
+  Secondary: 2,
+  General: 3,
+};
+
+// Extract numeric prefix (e.g. "01." → 1, "02." → 2, "00." → 0)
+function extractPrefix(title: string): number {
+  const m = title.match(/^(\d{1,2})\./);
+  return m ? parseInt(m[1], 10) : 999;
+}
+
+// Extract episode number (حلقة X or Episode X)
+function extractEpisode(title: string): number {
+  const arM = title.match(/حلقة\s*(\d+)/);
+  if (arM) return parseInt(arM[1], 10);
+  const enM = title.match(/episode\s*(\d+)/i);
+  if (enM) return parseInt(enM[1], 10);
+  // "مقدمة" comes before حلقة 1
+  if (/مقدمة/.test(title)) return 0;
+  return 999;
+}
+
+// Teacher priority within قدرات
+function quduraPriority(title: string): number {
+  if (/فهد.*التميمي|التميمي.*فهد/.test(title)) {
+    if (/كمي/.test(title)) return 0;
+    if (/استراتيجيات/.test(title)) return 1;
+    return 0;
+  }
+  if (/دورات.*القدرات|القدرات.*دورات/.test(title)) return 2;
+  if (/إيهاب|عبد.*العظيم/.test(title)) {
+    if (/لفظي/.test(title)) return 3;
+    if (/قطع/.test(title)) return 4;
+    return 3;
+  }
+  return 5;
+}
+
+function sortVideos(videos: any[]): any[] {
+  return [...videos].sort((a, b) => {
+    // 1. Category order
+    const catA = CATEGORY_ORDER[a.subject] ?? 9;
+    const catB = CATEGORY_ORDER[b.subject] ?? 9;
+    if (catA !== catB) return catA - catB;
+
+    // 2. Numeric prefix (01., 02., 00. etc.)
+    const preA = extractPrefix(a.title);
+    const preB = extractPrefix(b.title);
+    if (preA !== preB) return preA - preB;
+
+    // 3. Within قدرات: teacher priority
+    if (a.subject === "Qudurat") {
+      const pA = quduraPriority(a.title);
+      const pB = quduraPriority(b.title);
+      if (pA !== pB) return pA - pB;
+    }
+
+    // 4. Episode number
+    const epA = extractEpisode(a.title);
+    const epB = extractEpisode(b.title);
+    if (epA !== epB) return epA - epB;
+
+    // 5. Natural title sort
+    return a.title.localeCompare(b.title, "ar");
+  });
 }
 
 export default function Videos() {
@@ -37,9 +116,11 @@ export default function Videos() {
     { query: { queryKey: getListVideosQueryKey() } }
   );
 
-  const filteredVideos = videos?.filter(v => {
-    const matchSearch = v.title.toLowerCase().includes(search.toLowerCase()) ||
-      (v.description && v.description.toLowerCase().includes(search.toLowerCase()));
+  const sortedVideos = videos ? sortVideos(videos) : [];
+
+  const filteredVideos = sortedVideos.filter(v => {
+    const searchTarget = `${v.title} ${v.description || ""} ${v.subject}`;
+    const matchSearch = !search || fuzzyMatch(search, searchTarget);
     const matchCategory = category === "all" || v.subject === category;
     return matchSearch && matchCategory;
   });
@@ -47,15 +128,21 @@ export default function Videos() {
   const clearFilters = () => { setSearch(""); setCategory("all"); };
   const hasFilters = search || category !== "all";
 
-  const handleSuggestion = () => {
+  const handleSuggestion = async () => {
     if (!suggestionText.trim()) return;
-    setSubmittedTrack(suggestionText.trim());
+    const text = suggestionText.trim();
+    setSubmittedTrack(text);
     setSuggestionText("");
     setSuggestionSubmitted(true);
     setTimeout(() => setSuggestionSubmitted(false), 10000);
-    const stored = JSON.parse(localStorage.getItem("noor_suggestions") || "[]");
-    stored.push({ text: suggestionText.trim(), date: new Date().toISOString() });
-    localStorage.setItem("noor_suggestions", JSON.stringify(stored));
+    // Save to server (admin sees it); also fallback to localStorage
+    try {
+      await apiClient.post("/requests", { text, email: user?.email || "" });
+    } catch {
+      const stored = JSON.parse(localStorage.getItem("noor_suggestions") || "[]");
+      stored.push({ text, date: new Date().toISOString() });
+      localStorage.setItem("noor_suggestions", JSON.stringify(stored));
+    }
   };
 
   return (
@@ -202,7 +289,7 @@ export default function Videos() {
           </div>
         )}
 
-        {/* Suggestion / Request Form */}
+        {/* Lesson Request Form */}
         <div className="mt-16 border rounded-2xl p-8 bg-card shadow-sm">
           <h2 className="text-xl font-bold mb-2">
             {lang === "ar" ? "📬 طلب معلم أو درس" : "📬 Request a Teacher or Lesson"}

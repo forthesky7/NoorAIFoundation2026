@@ -2,15 +2,17 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ShieldCheck, Check, CreditCard, Bitcoin, Copy, Loader2, Zap, AlertCircle, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, Check, CreditCard, Bitcoin, Copy, Loader2, Zap, AlertCircle, CheckCircle2, Network } from "lucide-react";
 import { useCreateSubscription } from "@workspace/api-client-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { Redirect, Link } from "wouter";
+import { Redirect } from "wouter";
 import { useLang } from "@/lib/language";
+import { apiClient } from "@/lib/api";
 
 type PayMethod = "crypto" | "card";
+type CryptoNetwork = "trc20" | "polygon";
 
 export default function Subscribe() {
   const { user } = useAuth();
@@ -20,6 +22,7 @@ export default function Subscribe() {
   const [paymentInfo, setPaymentInfo] = useState<any>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [activeMethod, setActiveMethod] = useState<PayMethod>("crypto");
+  const [cryptoNetwork, setCryptoNetwork] = useState<CryptoNetwork>("trc20");
   const [copied, setCopied] = useState(false);
 
   if (user?.subscribed || user?.role === "admin") {
@@ -28,39 +31,34 @@ export default function Subscribe() {
 
   const handlePayment = (method: PayMethod) => {
     setActiveMethod(method);
-    subscribeMutation.mutate(
-      { data: { paymentMethod: method, currency: method === "crypto" ? "USDT" : "USD" } },
-      {
-        onSuccess: data => {
-          if (method === "card") {
-            // Card: open Lemon Squeezy in a new tab (external checkout)
-            if (data.paymentUrl) {
-              window.open(data.paymentUrl, "_blank", "noopener,noreferrer");
-            }
-            return;
-          }
-          // Crypto: show everything inside our modal — no external redirect
-          setPaymentInfo(data);
-          setModalOpen(true);
-        },
-        onError: (err: any) => {
-          if (method === "card" && err?.configured === false) {
-            toast({
-              title: lang === "ar" ? "بطاقة الدفع غير متاحة بعد" : "Card payment not yet available",
-              description: lang === "ar"
-                ? "يرجى استخدام الكريبتو حالياً. سيتم تفعيل البطاقة قريباً."
-                : "Please use Crypto for now. Card will be enabled soon.",
-            });
-          } else {
-            toast({
-              title: lang === "ar" ? "خطأ" : "Error",
-              description: err?.error || err?.message || (lang === "ar" ? "فشل تهيئة الدفع." : "Failed to initialize payment."),
-              variant: "destructive",
-            });
-          }
-        },
+    // For crypto: call API with selected network
+    apiClient.post("/subscription/create", {
+      paymentMethod: method,
+      currency: method === "crypto" ? "USDT" : "USD",
+      network: method === "crypto" ? cryptoNetwork : undefined,
+    }).then(async r => {
+      const data = await r.json();
+      if (!r.ok) throw data;
+      if (method === "card") {
+        if (data.paymentUrl) window.open(data.paymentUrl, "_blank", "noopener,noreferrer");
+        return;
       }
-    );
+      setPaymentInfo({ ...data, networkKey: cryptoNetwork });
+      setModalOpen(true);
+    }).catch((err: any) => {
+      if (method === "card" && err?.configured === false) {
+        toast({
+          title: lang === "ar" ? "الدفع بالبطاقة" : "Card Payment",
+          description: err?.error || "ستتوفر قريباً",
+        });
+      } else {
+        toast({
+          title: lang === "ar" ? "خطأ" : "Error",
+          description: err?.error || err?.message || (lang === "ar" ? "فشل تهيئة الدفع." : "Failed to initialize payment."),
+          variant: "destructive",
+        });
+      }
+    });
   };
 
   const handleCopyAddress = async () => {
@@ -85,6 +83,10 @@ export default function Subscribe() {
     "Future Simulator with financial projections",
     "Progress tracking & analytics",
   ];
+
+  const networkLabel = (n: CryptoNetwork) => n === "trc20"
+    ? (lang === "ar" ? "Tron (TRC20)" : "Tron (TRC20)")
+    : (lang === "ar" ? "Polygon (ERC-20)" : "Polygon (ERC-20)");
 
   return (
     <AppLayout>
@@ -134,14 +136,14 @@ export default function Subscribe() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Payment method selector */}
+              {/* Method selector */}
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => setActiveMethod("crypto")}
                   className={`p-4 rounded-xl border-2 text-sm font-medium transition-all flex flex-col items-center gap-2 ${activeMethod === "crypto" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}
                 >
                   <Bitcoin className="h-6 w-6 text-orange-500" />
-                  <span>{lang === "ar" ? "كريبتو (USDT TRC20)" : "Crypto (USDT TRC20)"}</span>
+                  <span>{lang === "ar" ? "كريبتو (USDT)" : "Crypto (USDT)"}</span>
                 </button>
                 <button
                   onClick={() => setActiveMethod("card")}
@@ -155,22 +157,41 @@ export default function Subscribe() {
               {/* Crypto Panel */}
               {activeMethod === "crypto" && (
                 <div className="space-y-4">
+                  {/* Network selector */}
+                  <div>
+                    <p className="text-sm font-medium mb-2">
+                      {lang === "ar" ? "اختر الشبكة:" : "Select network:"}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(["trc20", "polygon"] as CryptoNetwork[]).map(n => (
+                        <button
+                          key={n}
+                          onClick={() => setCryptoNetwork(n)}
+                          className={`p-3 rounded-lg border text-xs font-medium transition-all flex items-center gap-2 ${cryptoNetwork === n ? "border-primary bg-primary/8 text-primary" : "border-border hover:border-primary/40"}`}
+                        >
+                          <Network className="h-3.5 w-3.5 shrink-0" />
+                          {networkLabel(n)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="bg-secondary/50 rounded-lg p-4 border text-sm text-muted-foreground flex gap-3 items-start">
                     <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                     <p>
                       {lang === "ar"
-                        ? "ادفع بأمان بـ USDT على شبكة Tron (TRC20) عبر NOWPayments. يتم التفعيل تلقائياً بعد التأكيد. جميع رسوم الشبكة مدفوعة من طرفنا — أنت تدفع 5$ بالضبط."
-                        : "Pay securely with USDT on the Tron network (TRC20). Auto-activates after confirmation. All network fees are covered by us — you pay exactly $5."}
+                        ? `ادفع بأمان بـ USDT على شبكة ${networkLabel(cryptoNetwork)}. يتم التفعيل تلقائياً بعد التأكيد. جميع رسوم الشبكة مدفوعة من طرفنا — أنت تدفع 5$ بالضبط.`
+                        : `Pay securely with USDT on the ${networkLabel(cryptoNetwork)} network. Auto-activates after confirmation. All fees covered by us — you pay exactly $5.`}
                     </p>
                   </div>
                   <Button
                     className="w-full h-12 text-base"
                     onClick={() => handlePayment("crypto")}
-                    disabled={subscribeMutation.isPending && activeMethod === "crypto"}
                   >
-                    {subscribeMutation.isPending && activeMethod === "crypto"
-                      ? <><Loader2 className="h-4 w-4 animate-spin me-2" />{lang === "ar" ? "جاري التهيئة..." : "Initializing..."}</>
-                      : <><Bitcoin className="h-5 w-5 me-2" />{lang === "ar" ? "الدفع بـ USDT TRC20 — 5$" : "Pay with USDT TRC20 — $5"}</>}
+                    <Bitcoin className="h-5 w-5 me-2" />
+                    {lang === "ar"
+                      ? `الدفع بـ USDT ${networkLabel(cryptoNetwork)} — 5$`
+                      : `Pay with USDT ${networkLabel(cryptoNetwork)} — $5`}
                   </Button>
                 </div>
               )}
@@ -184,26 +205,22 @@ export default function Subscribe() {
                       {lang === "ar" ? "دفع فوري بالبطاقة" : "Instant Card Payment"}
                     </p>
                     <p className="text-sm text-muted-foreground mb-4">
-                      {lang === "ar"
-                        ? "ادفع بأمان عبر Lemon Squeezy. ستتم إعادة توجيهك لإكمال الدفع ويُفعَّل اشتراكك تلقائياً."
-                        : "Pay securely via Lemon Squeezy. You'll be redirected to complete payment and your subscription activates automatically."}
+                      {lang === "ar" ? "ستتوفر قريباً." : "Coming soon."}
                     </p>
                     <Button
                       className="w-full h-12 text-base"
                       onClick={() => handlePayment("card")}
-                      disabled={subscribeMutation.isPending && activeMethod === "card"}
                     >
-                      {subscribeMutation.isPending && activeMethod === "card"
-                        ? <><Loader2 className="h-4 w-4 animate-spin me-2" />{lang === "ar" ? "جاري الفتح..." : "Opening..."}</>
-                        : <><CreditCard className="h-5 w-5 me-2" />{lang === "ar" ? "الدفع بالبطاقة — 5$/شهر" : "Pay with Card — $5/mo"}</>}
+                      <CreditCard className="h-5 w-5 me-2" />
+                      {lang === "ar" ? "الدفع بالبطاقة — 5$/شهر" : "Pay with Card — $5/mo"}
                     </Button>
                   </div>
                   <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-3">
                     <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                     <p>
                       {lang === "ar"
-                        ? "إذا لم تُفعَّل بعد 5 دقائق من الدفع، تواصل مع الدعم أو استخدم كود الترويج."
-                        : "If not activated within 5 minutes of payment, contact support or use a promo code."}
+                        ? "إذا لم تُفعَّل بعد 5 دقائق من الدفع، تواصل مع الدعم."
+                        : "If not activated within 5 minutes of payment, contact support."}
                     </p>
                   </div>
                 </div>
@@ -213,13 +230,13 @@ export default function Subscribe() {
         </div>
       </div>
 
-      {/* ─── Crypto Payment Modal (in-platform, no external redirect) ─── */}
+      {/* ─── Crypto Payment Modal ─── */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="max-w-md w-full" dir={lang === "ar" ? "rtl" : "ltr"}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg">
               <Bitcoin className="h-5 w-5 text-orange-500" />
-              {lang === "ar" ? "تفاصيل الدفع بـ USDT TRC20" : "USDT TRC20 Payment Details"}
+              {lang === "ar" ? "تفاصيل الدفع بـ USDT" : "USDT Payment Details"}
             </DialogTitle>
           </DialogHeader>
 
@@ -235,13 +252,18 @@ export default function Subscribe() {
                 </span>
               </div>
 
+              {/* Network badge */}
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-xs bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded-full font-medium flex items-center gap-1.5">
+                  <Network className="h-3 w-3" />
+                  {paymentInfo.networkKey === "polygon" ? "Polygon (ERC-20)" : "Tron (TRC20)"}
+                </span>
+              </div>
+
               {/* Amount */}
               <div className="text-center py-2">
                 <p className="text-4xl font-mono font-bold tracking-tight">
                   {paymentInfo.amount} <span className="text-2xl text-muted-foreground">USDT</span>
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {lang === "ar" ? "شبكة Tron (TRC20)" : "Tron Network (TRC20)"}
                 </p>
               </div>
 
@@ -263,41 +285,33 @@ export default function Subscribe() {
               {/* Wallet address */}
               <div className="bg-muted rounded-lg p-4 border">
                 <p className="text-xs text-muted-foreground mb-2 font-medium">
-                  {lang === "ar" ? "عنوان المحفظة (USDT TRC20)" : "Wallet Address (USDT TRC20)"}
+                  {lang === "ar"
+                    ? `عنوان المحفظة (USDT ${paymentInfo.networkKey === "polygon" ? "Polygon" : "TRC20"})`
+                    : `Wallet Address (USDT ${paymentInfo.networkKey === "polygon" ? "Polygon" : "TRC20"})`}
                 </p>
                 <div className="flex items-center gap-2">
                   <code className="text-xs font-mono break-all flex-1 text-foreground leading-relaxed">
                     {paymentInfo.paymentAddress}
                   </code>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleCopyAddress}
-                    className="shrink-0 h-8 w-8"
-                  >
+                  <Button variant="outline" size="icon" onClick={handleCopyAddress} className="shrink-0 h-8 w-8">
                     {copied
                       ? <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
                       : <Copy className="h-3.5 w-3.5" />}
                   </Button>
                 </div>
-                {copied && (
-                  <p className="text-xs text-green-600 mt-1.5">
-                    {lang === "ar" ? "تم النسخ ✓" : "Copied ✓"}
-                  </p>
-                )}
+                {copied && <p className="text-xs text-green-600 mt-1.5">{lang === "ar" ? "تم النسخ ✓" : "Copied ✓"}</p>}
               </div>
 
-              {/* Important note */}
+              {/* Warning */}
               <div className="flex items-start gap-2 text-xs text-muted-foreground bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
                 <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600" />
                 <p>
-                  {lang === "ar"
-                    ? "تأكد من إرسال USDT على شبكة TRC20 فقط. الإرسال على شبكة مختلفة قد يؤدي لفقدان الأموال."
-                    : "Send USDT on TRC20 network only. Sending on a different network may result in permanent loss."}
+                  {paymentInfo.networkKey === "polygon"
+                    ? (lang === "ar" ? "تأكد من إرسال USDT على شبكة Polygon فقط. لا تستخدم TRC20 على هذا العنوان." : "Send USDT on Polygon network only. Do not send TRC20 to this address.")
+                    : (lang === "ar" ? "تأكد من إرسال USDT على شبكة TRC20 فقط. الإرسال على شبكة مختلفة قد يؤدي لفقدان الأموال." : "Send USDT on TRC20 network only. Sending on a different network may result in permanent loss.")}
                 </p>
               </div>
 
-              {/* Waiting indicator */}
               <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground pt-1">
                 <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
                 {lang === "ar" ? "في انتظار تأكيد الشبكة..." : "Waiting for network confirmation..."}
