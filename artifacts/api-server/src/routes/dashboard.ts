@@ -27,6 +27,7 @@ function extractPrefix(title: string): number {
 function getGroupIndex(subject: string, title: string): number {
   if (subject === "Qudurat") {
     const isFahad  = /فهد|التميمي/.test(title);
+    const isNadia  = /نادية|بدوي/.test(title);
     const isEhab   = /إيهاب|عبد.*العظيم|عبدالعظيم/.test(title);
     const isDawrat = /دورات.*قدرات|دورات القدرات/.test(title);
     if (isFahad) {
@@ -34,12 +35,13 @@ function getGroupIndex(subject: string, title: string): number {
       return 0;
     }
     if (isDawrat) return 2;
+    if (isNadia)  return 3;
     if (isEhab) {
-      if (/لفظي/.test(title))  return 3;
-      if (/تدريب/.test(title)) return 4;
-      if (/نماذج/.test(title)) return 5;
-      if (/قطع/.test(title))   return 6;
-      return 3;
+      if (/لفظي/.test(title))  return 4;
+      if (/تدريب/.test(title)) return 5;
+      if (/نماذج/.test(title)) return 6;
+      if (/قطع/.test(title))   return 7;
+      return 4;
     }
     return 90 + extractPrefix(title);
   }
@@ -52,8 +54,13 @@ function getGroupIndex(subject: string, title: string): number {
   }
   if (subject === "Secondary") {
     const prefix = extractPrefix(title);
-    let src = /واضح/.test(title) ? 0 : /مدرسة|school/i.test(title) ? 1 : 9;
-    return prefix * 1000 + src * 10;
+    let seriesIndex: number;
+    if (/التبرير.*الاستقرائي|الاستقرائي.*التبرير/.test(title))     seriesIndex = 0;
+    else if (/المضلعات.*المتشابهة|المتشابهة.*المضلعات/.test(title)) seriesIndex = 1;
+    else if (/تصنيف.*المثلثات|المثلثات.*تصنيف/.test(title))         seriesIndex = 2;
+    else if (/مقدمة.*في.*المتجهات|مقدمة.*المتجهات/.test(title))     seriesIndex = 3;
+    else seriesIndex = /واضح/.test(title) ? 50 : 99;
+    return prefix * 10000 + seriesIndex * 100;
   }
   return 0;
 }

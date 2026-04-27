@@ -48,31 +48,33 @@ function extractPrefix(title: string): number {
 function getGroupIndex(subject: string, title: string): number {
   if (subject === "Qudurat") {
     /**
-     * قدرات — 7 ordered groups:
+     * قدرات — 8 ordered groups:
      * 0: أ. فهد التميمي [كمي]
      * 1: أ. فهد التميمي [استراتيجيات]
      * 2: دورات القدرات [كمي]   ← ep-6 "الأعداد الأولية" slots between 5 and 7 naturally
-     * 3: أ. إيهاب عبد العظيم [لفظي]
-     * 4: أ. إيهاب عبد العظيم [تدريب]
-     * 5: أ. إيهاب عبد العظيم [نماذج]
-     * 6: أ. إيهاب عبد العظيم [قطع]
+     * 3: أ. نادية بدوي          ← after دورات القدرات, before إيهاب
+     * 4: أ. إيهاب عبد العظيم [لفظي]
+     * 5: أ. إيهاب عبد العظيم [تدريب]
+     * 6: أ. إيهاب عبد العظيم [نماذج]
+     * 7: أ. إيهاب عبد العظيم [قطع]
      */
-    const isFahad = /فهد|التميمي/.test(title);
-    const isEhab  = /إيهاب|عبد.*العظيم|عبدالعظيم/.test(title);
+    const isFahad  = /فهد|التميمي/.test(title);
+    const isNadia  = /نادية|بدوي/.test(title);
+    const isEhab   = /إيهاب|عبد.*العظيم|عبدالعظيم/.test(title);
     const isDawrat = /دورات.*قدرات|دورات القدرات/.test(title);
 
     if (isFahad) {
       if (/استراتيجيات/.test(title)) return 1;
-      if (/كمي/.test(title))          return 0;
-      return 0; // default فهد → كمي bucket
+      return 0;
     }
     if (isDawrat) return 2;
+    if (isNadia)  return 3;
     if (isEhab) {
-      if (/لفظي/.test(title))  return 3;
-      if (/تدريب/.test(title)) return 4;
-      if (/نماذج/.test(title)) return 5;
-      if (/قطع/.test(title))   return 6;
-      return 3; // default إيهاب → لفظي bucket
+      if (/لفظي/.test(title))  return 4;
+      if (/تدريب/.test(title)) return 5;
+      if (/نماذج/.test(title)) return 6;
+      if (/قطع/.test(title))   return 7;
+      return 4; // default إيهاب → لفظي bucket
     }
     // Unrecognised قدرات video — sort after all named groups, using prefix
     return 90 + extractPrefix(title);
@@ -101,19 +103,31 @@ function getGroupIndex(subject: string, title: string): number {
   if (subject === "Secondary") {
     /**
      * ثانوي - مسارات:
-     * Group by subject (via numeric prefix) and then by source series name.
-     * e.g. prefix-01 = Math; within Math: "واضح" series before other series.
-     * Keeps all "واضح" Math ep1-20 together, then next series.
+     * Group by FULL SERIES TITLE first, then episode number within the series.
+     * Episodes from different series must NEVER mix even if they share ep numbers.
      *
-     * Encoding: prefix * 1000 + sourceOrder * 10
-     *   sourceOrder: واضح=0, known series alphabetically, unknown=9
+     * Known math series (in required display order):
+     *   A (0): التبرير الاستقرائي          — أول ثانوي, eps 1-12
+     *   B (1): المضلعات المتشابهة          — واضح فصل 3, eps 1-20
+     *   C (2): تصنيف المثلثات              — أول ثانوي فصل 2 واضح, eps 1-21
+     *   D (3): مقدمة في المتجهات           — واضح ثالث ثانوي ف3, eps 1-32
+     *
+     * Encoding: prefix (subject) * 10000 + seriesIndex * 100
+     *   prefix keeps non-math subjects separated from math subjects.
+     *   seriesIndex preserves A→B→C→D order within math.
+     *   Unrecognised series: seriesIndex = 99 (after named groups).
      */
     const prefix = extractPrefix(title);
-    let sourceOrder: number;
-    if (/واضح/.test(title))    sourceOrder = 0;
-    else if (/مدرسة|school/i.test(title)) sourceOrder = 1;
-    else                       sourceOrder = 9;
-    return prefix * 1000 + sourceOrder * 10;
+    let seriesIndex: number;
+    if (/التبرير.*الاستقرائي|الاستقرائي.*التبرير/.test(title))     seriesIndex = 0;
+    else if (/المضلعات.*المتشابهة|المتشابهة.*المضلعات/.test(title)) seriesIndex = 1;
+    else if (/تصنيف.*المثلثات|المثلثات.*تصنيف/.test(title))         seriesIndex = 2;
+    else if (/مقدمة.*في.*المتجهات|مقدمة.*المتجهات/.test(title))     seriesIndex = 3;
+    else {
+      // Fallback: keep واضح before unnamed, and group by prefix
+      seriesIndex = /واضح/.test(title) ? 50 : 99;
+    }
+    return prefix * 10000 + seriesIndex * 100;
   }
 
   // General — no sub-grouping; pure episode order
