@@ -5,6 +5,7 @@ import { like, or, eq } from "drizzle-orm";
 import { authMiddleware, type AuthRequest } from "../lib/auth";
 import { getSettings, updateSettings } from "../lib/settings";
 import { randomUUID } from "crypto";
+import bcrypt from "bcryptjs";
 
 const router = Router();
 
@@ -72,6 +73,26 @@ router.post("/admin/users/:id/activate", authMiddleware, ownerOnly, async (req: 
     });
 
     return res.json({ success: true, message: "Subscription activated", expiresAt: expiresAt.toISOString() });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.post("/admin/users/:id/reset-password", authMiddleware, ownerOnly, async (req: AuthRequest, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const { newPassword } = req.body;
+    if (!newPassword || typeof newPassword !== "string" || newPassword.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const updated = await db.update(usersTable)
+      .set({ passwordHash })
+      .where(eq(usersTable.id, userId))
+      .returning({ id: usersTable.id, email: usersTable.email });
+    if (updated.length === 0) return res.status(404).json({ error: "User not found" });
+    return res.json({ success: true, email: updated[0].email });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Server error" });

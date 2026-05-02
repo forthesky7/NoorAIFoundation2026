@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, HelpCircle, Mail, X } from "lucide-react";
 import { useLang } from "@/lib/language";
 
 const formSchema = z.object({
@@ -33,6 +33,9 @@ export default function Login() {
   const loginMutation = useLogin();
   const { lang } = useLang();
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+
+  const isAr = lang === "ar";
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,15 +47,15 @@ export default function Login() {
       onSuccess: data => {
         setToken(data.token);
         toast({
-          title: lang === "ar" ? "أهلاً بعودتك!" : "Welcome back!",
-          description: lang === "ar" ? "تم تسجيل الدخول بنجاح." : "You have successfully logged in.",
+          title: isAr ? "أهلاً بعودتك!" : "Welcome back!",
+          description: isAr ? "تم تسجيل الدخول بنجاح." : "You have successfully logged in.",
         });
         setLocation("/dashboard");
       },
       onError: (error: any) => {
         toast({
-          title: lang === "ar" ? "فشل تسجيل الدخول" : "Login failed",
-          description: error?.error || (lang === "ar" ? "تحقق من بياناتك وحاول مجدداً." : "Please check your credentials and try again."),
+          title: isAr ? "فشل تسجيل الدخول" : "Login failed",
+          description: error?.error || (isAr ? "تحقق من بياناتك وحاول مجدداً." : "Please check your credentials and try again."),
           variant: "destructive",
         });
       },
@@ -71,10 +74,10 @@ export default function Login() {
               onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
             />
             <CardTitle className="text-2xl">
-              {lang === "ar" ? "تسجيل الدخول إلى نُور AI" : "Log in to NOOR AI"}
+              {isAr ? "تسجيل الدخول إلى نُور AI" : "Log in to NOOR AI"}
             </CardTitle>
             <CardDescription>
-              {lang === "ar" ? "أدخل بيانات حسابك للوصول إلى المنصة" : "Enter your credentials to access your account"}
+              {isAr ? "أدخل بيانات حسابك للوصول إلى المنصة" : "Enter your credentials to access your account"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -85,7 +88,7 @@ export default function Login() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{lang === "ar" ? "البريد الإلكتروني" : "Email"}</FormLabel>
+                      <FormLabel>{isAr ? "البريد الإلكتروني" : "Email"}</FormLabel>
                       <FormControl>
                         <Input placeholder="you@example.com" type="email" dir="ltr" autoComplete="email" {...field} />
                       </FormControl>
@@ -98,7 +101,17 @@ export default function Login() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{lang === "ar" ? "كلمة المرور" : "Password"}</FormLabel>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>{isAr ? "كلمة المرور" : "Password"}</FormLabel>
+                        <button
+                          type="button"
+                          onClick={() => setShowForgot(true)}
+                          className="text-xs text-primary hover:underline flex items-center gap-1"
+                        >
+                          <HelpCircle className="h-3 w-3" />
+                          {isAr ? "نسيت كلمة المرور؟" : "Forgot password?"}
+                        </button>
+                      </div>
                       <FormControl>
                         <div className="relative">
                           <Input
@@ -126,22 +139,69 @@ export default function Login() {
                 />
                 <Button type="submit" className="w-full h-11" disabled={loginMutation.isPending}>
                   {loginMutation.isPending
-                    ? (lang === "ar" ? "جارٍ الدخول..." : "Logging in...")
-                    : (lang === "ar" ? "تسجيل الدخول" : "Log in")}
+                    ? (isAr ? "جارٍ الدخول..." : "Logging in...")
+                    : (isAr ? "تسجيل الدخول" : "Log in")}
                 </Button>
               </form>
             </Form>
           </CardContent>
           <CardFooter className="justify-center">
             <p className="text-sm text-muted-foreground">
-              {lang === "ar" ? "ليس لديك حساب؟ " : "Don't have an account? "}
+              {isAr ? "ليس لديك حساب؟ " : "Don't have an account? "}
               <Link href="/register" className="text-primary hover:underline font-medium">
-                {lang === "ar" ? "إنشاء حساب" : "Sign up"}
+                {isAr ? "إنشاء حساب" : "Sign up"}
               </Link>
             </p>
           </CardFooter>
         </Card>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgot && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-background border rounded-2xl shadow-2xl w-full max-w-sm p-6 relative">
+            <button
+              onClick={() => setShowForgot(false)}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="text-center mb-5">
+              <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Mail className="h-6 w-6 text-primary" />
+              </div>
+              <h2 className="text-lg font-bold">
+                {isAr ? "استعادة كلمة المرور" : "Password Recovery"}
+              </h2>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                {isAr
+                  ? "لا يوجد حالياً خيار إعادة تعيين تلقائي. يرجى التواصل مع مسؤول المنصة لإعادة تعيين كلمة المرور الخاصة بك."
+                  : "Automatic password reset is not available. Please contact the platform administrator to reset your password."}
+              </p>
+            </div>
+            <div className="bg-muted/50 rounded-xl p-4 space-y-2 text-sm border">
+              <p className="font-semibold text-foreground">
+                {isAr ? "تواصل مع الدعم:" : "Contact Support:"}
+              </p>
+              <a
+                href="mailto:noorsupportteam@gmail.com"
+                className="flex items-center gap-2 text-primary hover:underline"
+              >
+                <Mail className="h-4 w-4 shrink-0" />
+                noorsupportteam@gmail.com
+              </a>
+              <p className="text-muted-foreground text-xs mt-1">
+                {isAr
+                  ? "أرسل بريدك الإلكتروني المسجل وسيتم إعادة تعيين كلمة مرورك خلال 24 ساعة."
+                  : "Send your registered email address and your password will be reset within 24 hours."}
+              </p>
+            </div>
+            <Button className="w-full mt-4" onClick={() => setShowForgot(false)}>
+              {isAr ? "فهمت، شكراً" : "Got it, thanks"}
+            </Button>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 }

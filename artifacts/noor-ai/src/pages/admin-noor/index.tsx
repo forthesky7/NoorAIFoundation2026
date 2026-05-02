@@ -17,7 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import {
   PlayCircle, Users, CreditCard, Plus, Trash2, Link2, Upload,
-  CheckCircle2, AlertCircle, Search, UserCheck, Send, Settings, Tag, X, MessageSquare, Clock
+  CheckCircle2, AlertCircle, Search, UserCheck, Send, Settings, Tag, X, MessageSquare, Clock, KeyRound
 } from "lucide-react";
 import { apiClient } from "@/lib/api";
 
@@ -64,6 +64,9 @@ export default function AdminNoor() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [activatingId, setActivatingId] = useState<number | null>(null);
+  const [resetPasswordId, setResetPasswordId] = useState<number | null>(null);
+  const [resetPasswordValue, setResetPasswordValue] = useState("");
+  const [resettingId, setResettingId] = useState<number | null>(null);
 
   // Student Requests
   const [requests, setRequests] = useState<LessonRequest[]>([]);
@@ -180,6 +183,29 @@ export default function AdminNoor() {
     } else {
       toast({ title: lang === "ar" ? "فشل الحفظ" : "Save failed", variant: "destructive" });
     }
+  };
+
+  const handleResetPassword = async (userId: number) => {
+    if (!resetPasswordValue.trim() || resetPasswordValue.trim().length < 6) {
+      toast({ title: lang === "ar" ? "كلمة المرور قصيرة جداً (6 أحرف على الأقل)" : "Password too short (min 6 characters)", variant: "destructive" });
+      return;
+    }
+    setResettingId(userId);
+    try {
+      const res = await apiClient.post(`/admin/users/${userId}/reset-password`, { newPassword: resetPasswordValue.trim() });
+      if (res.ok) {
+        const data = await res.json();
+        toast({ title: lang === "ar" ? `تم تغيير كلمة مرور ${data.email} ✓` : `Password reset for ${data.email} ✓` });
+        setResetPasswordId(null);
+        setResetPasswordValue("");
+      } else {
+        const err = await res.json();
+        toast({ title: err.error || (lang === "ar" ? "فشل التغيير" : "Reset failed"), variant: "destructive" });
+      }
+    } catch {
+      toast({ title: lang === "ar" ? "خطأ في الاتصال" : "Connection error", variant: "destructive" });
+    }
+    setResettingId(null);
   };
 
   const handleActivate = async (userId: number) => {
@@ -334,41 +360,93 @@ export default function AdminNoor() {
                       <th className="px-4 py-3 font-medium text-start">{lang === "ar" ? "الاسم" : "Name"}</th>
                       <th className="px-4 py-3 font-medium text-start">{lang === "ar" ? "البريد" : "Email"}</th>
                       <th className="px-4 py-3 font-medium text-start">{lang === "ar" ? "الحالة" : "Status"}</th>
-                      <th className="px-4 py-3 font-medium text-end">{lang === "ar" ? "تفعيل" : "Activate"}</th>
+                      <th className="px-4 py-3 font-medium text-end">{lang === "ar" ? "إجراءات" : "Actions"}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {usersLoading ? (
                       <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">{lang === "ar" ? "جارٍ التحميل..." : "Loading..."}</td></tr>
                     ) : users.length > 0 ? users.map(user => (
-                      <tr key={user.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
-                        <td className="px-4 py-3 font-medium">{user.name}</td>
-                        <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{user.email}</td>
-                        <td className="px-4 py-3">
-                          {user.subscribed ? (
-                            <Badge className="bg-green-100 text-green-700 border-0 dark:bg-green-950/40 dark:text-green-400">
-                              {lang === "ar" ? "مشترك" : "Subscribed"}
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary">{lang === "ar" ? "مجاني" : "Free"}</Badge>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-end">
-                          {!user.subscribed && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleActivate(user.id)}
-                              disabled={activatingId === user.id}
-                            >
-                              <UserCheck className="h-3.5 w-3.5 me-1.5" />
-                              {activatingId === user.id
-                                ? (lang === "ar" ? "..." : "...")
-                                : (lang === "ar" ? "تفعيل" : "Activate")}
-                            </Button>
-                          )}
-                        </td>
-                      </tr>
+                      <>
+                        <tr key={user.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
+                          <td className="px-4 py-3 font-medium">{user.name}</td>
+                          <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{user.email}</td>
+                          <td className="px-4 py-3">
+                            {user.subscribed ? (
+                              <Badge className="bg-green-100 text-green-700 border-0 dark:bg-green-950/40 dark:text-green-400">
+                                {lang === "ar" ? "مشترك" : "Subscribed"}
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary">{lang === "ar" ? "مجاني" : "Free"}</Badge>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-end">
+                            <div className="flex items-center justify-end gap-2">
+                              {!user.subscribed && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleActivate(user.id)}
+                                  disabled={activatingId === user.id}
+                                >
+                                  <UserCheck className="h-3.5 w-3.5 me-1.5" />
+                                  {activatingId === user.id ? "..." : (lang === "ar" ? "تفعيل" : "Activate")}
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-muted-foreground hover:text-foreground"
+                                onClick={() => {
+                                  setResetPasswordId(resetPasswordId === user.id ? null : user.id);
+                                  setResetPasswordValue("");
+                                }}
+                              >
+                                <KeyRound className="h-3.5 w-3.5 me-1.5" />
+                                {lang === "ar" ? "تغيير المرور" : "Reset PW"}
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                        {resetPasswordId === user.id && (
+                          <tr key={`reset-${user.id}`} className="bg-amber-50 dark:bg-amber-950/20 border-b">
+                            <td colSpan={4} className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <KeyRound className="h-4 w-4 text-amber-600 shrink-0" />
+                                <span className="text-sm font-medium text-amber-700 dark:text-amber-400">
+                                  {lang === "ar" ? `إعادة تعيين كلمة مرور: ${user.email}` : `Reset password for: ${user.email}`}
+                                </span>
+                              </div>
+                              <div className="flex gap-2 mt-2">
+                                <Input
+                                  type="text"
+                                  placeholder={lang === "ar" ? "كلمة المرور الجديدة (6 أحرف على الأقل)" : "New password (min 6 characters)"}
+                                  value={resetPasswordValue}
+                                  onChange={e => setResetPasswordValue(e.target.value)}
+                                  dir="ltr"
+                                  className="font-mono text-sm max-w-xs"
+                                  onKeyDown={e => e.key === "Enter" && handleResetPassword(user.id)}
+                                />
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleResetPassword(user.id)}
+                                  disabled={resettingId === user.id || !resetPasswordValue.trim()}
+                                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                                >
+                                  {resettingId === user.id ? "..." : (lang === "ar" ? "تأكيد" : "Confirm")}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => { setResetPasswordId(null); setResetPasswordValue(""); }}
+                                >
+                                  {lang === "ar" ? "إلغاء" : "Cancel"}
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
                     )) : (
                       <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">{lang === "ar" ? "لا يوجد مستخدمون" : "No users found"}</td></tr>
                     )}

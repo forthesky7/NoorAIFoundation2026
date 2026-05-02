@@ -5,6 +5,7 @@ import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { RegisterBody, LoginBody } from "@workspace/api-zod";
+import { authMiddleware, type AuthRequest } from "../lib/auth";
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "noor-ai-secret-key-2024";
@@ -54,6 +55,24 @@ router.post("/auth/login", async (req, res) => {
       token,
     });
   } catch (err) {
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.post("/auth/change-password", authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: "Invalid input. New password must be at least 6 characters." });
+    }
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!));
+    if (!user) return res.status(401).json({ error: "User not found" });
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) return res.status(401).json({ error: "Current password is incorrect" });
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await db.update(usersTable).set({ passwordHash }).where(eq(usersTable.id, req.userId!));
+    return res.json({ message: "Password updated successfully" });
+  } catch {
     return res.status(500).json({ error: "Server error" });
   }
 });
