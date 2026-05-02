@@ -125,7 +125,7 @@ export default function Login() {
                             type={showPassword ? "text" : "password"}
                             dir={passwordDir}
                             autoComplete="current-password"
-                            className={passwordDir === "rtl" ? "pr-10 text-right" : "pl-10 text-left"}
+                            className={passwordDir === "rtl" ? "pl-10 text-start" : "pr-10 text-start"}
                             onInput={handlePasswordInput}
                             {...field}
                           />
@@ -133,7 +133,7 @@ export default function Login() {
                             type="button"
                             tabIndex={-1}
                             onClick={() => setShowPassword(v => !v)}
-                            className={`absolute inset-y-0 ${passwordDir === "rtl" ? "right-0 pr-3" : "left-0 pl-3"} flex items-center text-muted-foreground hover:text-foreground transition-colors`}
+                            className={`absolute inset-y-0 ${passwordDir === "rtl" ? "left-0 pl-3" : "right-0 pr-3"} flex items-center text-muted-foreground hover:text-foreground transition-colors`}
                             aria-label={showPassword ? "Hide password" : "Show password"}
                           >
                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
