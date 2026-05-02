@@ -28,6 +28,17 @@ const OWNER_EMAIL = "forthesky7@gmail.com";
 
 const queryClient = new QueryClient();
 
+function RootRoute() {
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) {
+    return <div className="flex-1 flex items-center justify-center min-h-screen">جاري التحميل...</div>;
+  }
+  if (!isAuthenticated) {
+    return <Redirect to="/promo" />;
+  }
+  return <Home />;
+}
+
 function ProtectedRoute({
   component: Component,
   adminOnly = false,
@@ -61,7 +72,7 @@ function ProtectedRoute({
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
+      <Route path="/" component={RootRoute} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
 
