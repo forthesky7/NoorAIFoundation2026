@@ -11,7 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, GraduationCap, Briefcase, Trophy, Lock, Download, BanknoteIcon, TrendingUp } from "lucide-react";
+import {
+  Loader2, Sparkles, GraduationCap, Briefcase, Trophy, Lock,
+  Download, BanknoteIcon, TrendingUp, Share2, Crown,
+} from "lucide-react";
+
+const TRIAL_KEY = "noor_future_trial_used";
 
 const arabicInterests = [
   { value: "تكنولوجيا", label: "💻 التكنولوجيا والبرمجة" },
@@ -86,6 +91,12 @@ export default function FutureSimulator() {
   const { user } = useAuth();
   const { lang } = useLang();
   const isSubscribed = user?.subscribed || user?.role === "admin";
+  const isAr = lang === "ar";
+
+  // Free trial: tracked in localStorage; non-subscribers get exactly one use
+  const [trialUsed, setTrialUsed] = useState(() => !!localStorage.getItem(TRIAL_KEY));
+  const [trialExpired, setTrialExpired] = useState(false);
+
   const roadmapMutation = useGenerateCareerRoadmap();
   const [roadmap, setRoadmap] = useState<any>(null);
 
@@ -95,11 +106,49 @@ export default function FutureSimulator() {
   const [approxGrade, setApproxGrade] = useState<string>("");
   const [livingStandard, setLivingStandard] = useState<string>("");
   const [goals, setGoals] = useState<string>("");
+  const [shareSuccess, setShareSuccess] = useState(false);
 
-  const interests = lang === "ar" ? arabicInterests : englishInterests;
+  const interests = isAr ? arabicInterests : englishInterests;
+
+  // Hard block: non-subscriber who already used the trial
+  if (!isSubscribed && trialUsed && !roadmap) {
+    return (
+      <AppLayout>
+        <div className="container mx-auto px-4 py-24 max-w-2xl text-center">
+          <div className="bg-primary/5 border border-primary/20 rounded-3xl p-12">
+            <Crown className="h-16 w-16 text-primary mx-auto mb-6 opacity-70" />
+            <div className="inline-flex items-center gap-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-semibold px-3 py-1.5 rounded-full mb-5">
+              <Sparkles className="h-3 w-3" />
+              {isAr ? "تجربة مجانية — تمت الاستفادة منها" : "Free Trial — Already Used"}
+            </div>
+            <h1 className="text-2xl font-bold mb-3">
+              {isAr ? "لقد استخدمت تجربتك المجانية" : "You've Used Your Free Trial"}
+            </h1>
+            <p className="text-muted-foreground mb-8 leading-relaxed">
+              {isAr
+                ? "اشترك في نُور AI للوصول الكامل غير المحدود لمحاكي المستقبل وجميع الأدوات الذكية."
+                : "Subscribe to Noor AI for unlimited full access to the Future Simulator and all smart tools."}
+            </p>
+            <Button size="lg" asChild>
+              <Link href="/subscribe">
+                {isAr ? "اشترك وافتح المحاكي" : "Subscribe to Unlock"}
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   const handleGenerate = () => {
     if (!selectedInterest || !currentGrade) return;
+
+    // Mark trial as used for non-subscribers
+    if (!isSubscribed) {
+      localStorage.setItem(TRIAL_KEY, "1");
+      setTrialUsed(true);
+    }
+
     const finalInterest = selectedInterest === "أخرى" ? (customInterest.trim() || "أخرى") : selectedInterest;
     const enrichedGoals = [
       goals,
@@ -115,30 +164,24 @@ export default function FutureSimulator() {
 
   const handlePrint = () => window.print();
 
-  if (!isSubscribed) {
-    return (
-      <AppLayout>
-        <div className="container mx-auto px-4 py-24 max-w-2xl text-center">
-          <div className="bg-primary/5 border border-primary/20 rounded-3xl p-12">
-            <Lock className="h-16 w-16 text-primary mx-auto mb-6 opacity-70" />
-            <h1 className="text-3xl font-bold mb-4">
-              {lang === "ar" ? "محاكي المستقبل" : "Future Simulator"}
-            </h1>
-            <p className="text-muted-foreground text-lg mb-8">
-              {lang === "ar"
-                ? "اكتشف مسارك المهني وتوقعات راتبك وخارطة طريقك نحو النجاح — حصرياً للمشتركين."
-                : "Discover your career path, salary projections, and roadmap to success — subscribers only."}
-            </p>
-            <Button size="lg" asChild>
-              <Link href="/subscribe">
-                {lang === "ar" ? "اشترك وافتح المحاكي" : "Subscribe to Unlock"}
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </AppLayout>
-    );
-  }
+  const handleShare = async () => {
+    const text = roadmap
+      ? `🌟 ${isAr ? "خارطة مستقبلي من نُور AI" : "My Future Roadmap from Noor AI"}\n${roadmap.title}\n${roadmap.summary}\n\n${isAr ? "اكتشف مستقبلك مع نُور AI!" : "Discover your future with Noor AI!"}`
+      : "";
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Noor AI — Future Simulator", text });
+      } else {
+        await navigator.clipboard.writeText(text);
+        setShareSuccess(true);
+        setTimeout(() => setShareSuccess(false), 3000);
+      }
+    } catch { /* user cancelled */ }
+  };
+
+  // For non-subscribers, only show the first 2 steps; blur the rest
+  const visibleSteps = roadmap?.steps ?? [];
+  const FREE_STEPS = 2;
 
   return (
     <AppLayout>
@@ -146,30 +189,37 @@ export default function FutureSimulator() {
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
             <Sparkles className="h-4 w-4" />
-            {lang === "ar" ? "مدعوم بالذكاء الاصطناعي" : "Powered by AI"}
+            {isAr ? "مدعوم بالذكاء الاصطناعي" : "Powered by AI"}
           </div>
           <h1 className="text-4xl font-bold tracking-tight mb-3">
-            {lang === "ar" ? "محاكي المستقبل" : "Future Simulator"}
+            {isAr ? "محاكي المستقبل" : "Future Simulator"}
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            {lang === "ar"
+            {isAr
               ? "أجب على أربعة أسئلة وسيرسم لك نُور AI خارطة طريق مخصصة لمستقبلك المهني مع توقعات مالية حقيقية."
               : "Answer four questions and NOOR AI will draw your personalized career roadmap with real financial projections."}
           </p>
+          {/* Free trial indicator for non-subscribers */}
+          {!isSubscribed && !roadmap && (
+            <div className="mt-4 inline-flex items-center gap-2 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 text-sm px-4 py-2 rounded-full font-medium">
+              <Sparkles className="h-3.5 w-3.5" />
+              {isAr ? "تجربة مجانية — جرّب مرة واحدة مجاناً" : "Free Trial — Try once for free"}
+            </div>
+          )}
         </div>
 
         {!roadmap ? (
           <Card className="shadow-sm">
             <CardHeader>
               <CardTitle>
-                {lang === "ar" ? "أخبرنا عنك" : "Tell us about yourself"}
+                {isAr ? "أخبرنا عنك" : "Tell us about yourself"}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-7">
               {/* Q1 — Interest */}
               <div className="space-y-3">
                 <Label className="text-base font-semibold">
-                  {lang === "ar" ? "١. ما المجال الذي يشعل شغفك؟" : "1. What field excites you most?"}
+                  {isAr ? "١. ما المجال الذي يشعل شغفك؟" : "1. What field excites you most?"}
                 </Label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {interests.map(interest => (
@@ -188,7 +238,7 @@ export default function FutureSimulator() {
                 </div>
                 {selectedInterest === "أخرى" && (
                   <Input
-                    placeholder={lang === "ar" ? "اكتب مجالك المخصص هنا..." : "Type your custom field here..."}
+                    placeholder={isAr ? "اكتب مجالك المخصص هنا..." : "Type your custom field here..."}
                     value={customInterest}
                     onChange={e => setCustomInterest(e.target.value)}
                     className="mt-2 h-11"
@@ -200,11 +250,11 @@ export default function FutureSimulator() {
               {/* Q2 — Grade Level */}
               <div className="space-y-2">
                 <Label className="text-base font-semibold">
-                  {lang === "ar" ? "٢. ما مرحلتك الدراسية الحالية؟" : "2. What is your current academic level?"}
+                  {isAr ? "٢. ما مرحلتك الدراسية الحالية؟" : "2. What is your current academic level?"}
                 </Label>
                 <Select value={currentGrade} onValueChange={setCurrentGrade}>
                   <SelectTrigger className="h-11">
-                    <SelectValue placeholder={lang === "ar" ? "اختر مرحلتك..." : "Select level..."} />
+                    <SelectValue placeholder={isAr ? "اختر مرحلتك..." : "Select level..."} />
                   </SelectTrigger>
                   <SelectContent>
                     {gradeLevels.map(g => (
@@ -217,11 +267,11 @@ export default function FutureSimulator() {
               {/* Q3 — Approximate Grades */}
               <div className="space-y-2">
                 <Label className="text-base font-semibold">
-                  {lang === "ar" ? "٣. كيف تصف مستوى درجاتك التقريبي؟" : "3. How would you describe your approximate grades?"}
+                  {isAr ? "٣. كيف تصف مستوى درجاتك التقريبي؟" : "3. How would you describe your approximate grades?"}
                 </Label>
                 <Select value={approxGrade} onValueChange={setApproxGrade}>
                   <SelectTrigger className="h-11">
-                    <SelectValue placeholder={lang === "ar" ? "اختر مستوى درجاتك..." : "Select grade level..."} />
+                    <SelectValue placeholder={isAr ? "اختر مستوى درجاتك..." : "Select grade level..."} />
                   </SelectTrigger>
                   <SelectContent>
                     {approxGrades.map(g => (
@@ -234,7 +284,7 @@ export default function FutureSimulator() {
               {/* Q4 — Living Standard */}
               <div className="space-y-3">
                 <Label className="text-base font-semibold">
-                  {lang === "ar" ? "٤. ما المستوى المعيشي الذي تطمح إليه؟" : "4. What living standard do you aspire to?"}
+                  {isAr ? "٤. ما المستوى المعيشي الذي تطمح إليه؟" : "4. What living standard do you aspire to?"}
                 </Label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {livingStandards.map(ls => (
@@ -256,10 +306,10 @@ export default function FutureSimulator() {
               {/* Optional Goals */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-muted-foreground">
-                  {lang === "ar" ? "هل لديك هدف محدد؟ (اختياري)" : "Do you have a specific goal? (optional)"}
+                  {isAr ? "هل لديك هدف محدد؟ (اختياري)" : "Do you have a specific goal? (optional)"}
                 </Label>
                 <Textarea
-                  placeholder={lang === "ar"
+                  placeholder={isAr
                     ? "مثال: أريد أن أكون مهندس ذكاء اصطناعي وأعمل في شركة عالمية بحلول 2030..."
                     : "E.g. I want to be an AI engineer working at a global company by 2030..."}
                   value={goals}
@@ -275,9 +325,9 @@ export default function FutureSimulator() {
                 disabled={!selectedInterest || !currentGrade || roadmapMutation.isPending}
               >
                 {roadmapMutation.isPending ? (
-                  <><Loader2 className="h-5 w-5 animate-spin me-2" />{lang === "ar" ? "نُور يحلل مسارك..." : "NOOR is analyzing..."}</>
+                  <><Loader2 className="h-5 w-5 animate-spin me-2" />{isAr ? "نُور يحلل مسارك..." : "NOOR is analyzing..."}</>
                 ) : (
-                  <><Sparkles className="h-5 w-5 me-2" />{lang === "ar" ? "ارسم لي مستقبلي" : "Generate My Roadmap"}</>
+                  <><Sparkles className="h-5 w-5 me-2" />{isAr ? "ارسم لي مستقبلي" : "Generate My Roadmap"}</>
                 )}
               </Button>
             </CardContent>
@@ -307,7 +357,7 @@ export default function FutureSimulator() {
                   </div>
                   <div className="text-center sm:text-start flex-1">
                     <p className="text-sm font-medium text-green-700 dark:text-green-400 mb-1">
-                      {lang === "ar" ? "التوقع المالي خلال 5 سنوات" : "Financial Projection in 5 Years"}
+                      {isAr ? "التوقع المالي خلال 5 سنوات" : "Financial Projection in 5 Years"}
                     </p>
                     <p className="text-2xl font-extrabold text-green-900 dark:text-green-200 mb-1">
                       {roadmap.financialProjection.estimatedSalary}
@@ -325,44 +375,70 @@ export default function FutureSimulator() {
             <div>
               <h3 className="text-xl font-bold mb-5 flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />
-                {lang === "ar" ? "خارطة الطريق المرحلية" : "Phased Roadmap"}
+                {isAr ? "خارطة الطريق المرحلية" : "Phased Roadmap"}
               </h3>
               <div className="space-y-5">
-                {roadmap.steps?.map((step: any, i: number) => (
-                  <Card key={i} className={`border-2 ${phaseColors[i] || ""} shadow-sm`}>
-                    <CardContent className="p-5 sm:p-6 flex gap-4 sm:gap-6">
-                      <div className={`${phaseAccents[i] || ""} rounded-full h-12 w-12 flex items-center justify-center shrink-0 shadow`}>
-                        {phaseIcons[i]}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-3 mb-2">
-                          <h4 className="font-bold text-lg">{step.title}</h4>
-                          <Badge variant="outline" className="text-xs">{step.duration}</Badge>
+                {visibleSteps.map((step: any, i: number) => {
+                  const isLocked = !isSubscribed && i >= FREE_STEPS;
+                  return (
+                    <div key={i} className="relative">
+                      <Card className={`border-2 ${phaseColors[i] || ""} shadow-sm ${isLocked ? "select-none" : ""}`}>
+                        <CardContent
+                          className="p-5 sm:p-6 flex gap-4 sm:gap-6"
+                          style={isLocked ? { filter: "blur(6px)", pointerEvents: "none", userSelect: "none" } : {}}
+                        >
+                          <div className={`${phaseAccents[i] || ""} rounded-full h-12 w-12 flex items-center justify-center shrink-0 shadow`}>
+                            {phaseIcons[i]}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-3 mb-2">
+                              <h4 className="font-bold text-lg">{step.title}</h4>
+                              <Badge variant="outline" className="text-xs">{step.duration}</Badge>
+                            </div>
+                            <p className="text-muted-foreground text-sm mb-4 leading-relaxed">{step.description}</p>
+                            <ul className="space-y-2">
+                              {step.milestones?.map((m: string, j: number) => (
+                                <li key={j} className="flex items-start gap-2 text-sm">
+                                  <span className={`rounded-full h-5 w-5 flex items-center justify-center text-xs shrink-0 mt-0.5 ${phaseAccents[i] || ""}`}>
+                                    {j + 1}
+                                  </span>
+                                  <span>{m}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Lock overlay for blurred steps */}
+                      {isLocked && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10 rounded-xl">
+                          <div className="bg-card/90 backdrop-blur-sm border border-primary/20 rounded-2xl px-6 py-4 text-center shadow-lg max-w-xs">
+                            <Lock className="h-6 w-6 text-primary mx-auto mb-2" />
+                            <p className="text-sm font-semibold mb-3">
+                              {isAr ? "افتح خارطة طريقك المهنية الكاملة بالاشتراك" : "Unlock your full professional roadmap by subscribing."}
+                            </p>
+                            <Button size="sm" asChild className="w-full">
+                              <Link href="/subscribe">
+                                {isAr ? "اشترك الآن" : "Subscribe Now"}
+                              </Link>
+                            </Button>
+                          </div>
                         </div>
-                        <p className="text-muted-foreground text-sm mb-4 leading-relaxed">{step.description}</p>
-                        <ul className="space-y-2">
-                          {step.milestones?.map((m: string, j: number) => (
-                            <li key={j} className="flex items-start gap-2 text-sm">
-                              <span className={`rounded-full h-5 w-5 flex items-center justify-center text-xs shrink-0 mt-0.5 ${phaseAccents[i] || ""}`}>
-                                {j + 1}
-                              </span>
-                              <span>{m}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
             {/* Recommended Subjects */}
             {roadmap.recommendedSubjects?.length > 0 && (
-              <Card className="shadow-sm">
+              <Card className={`shadow-sm ${!isSubscribed ? "opacity-40 pointer-events-none select-none" : ""}`}
+                style={!isSubscribed ? { filter: "blur(4px)" } : {}}>
                 <CardHeader>
                   <CardTitle className="text-lg">
-                    {lang === "ar" ? "📚 المواد المُوصى بها" : "📚 Recommended Subjects"}
+                    {isAr ? "📚 المواد المُوصى بها" : "📚 Recommended Subjects"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -377,14 +453,52 @@ export default function FutureSimulator() {
 
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3 pb-8">
-              <Button variant="outline" onClick={() => setRoadmap(null)} className="flex-1">
-                {lang === "ar" ? "↩ جرب مساراً آخر" : "↩ Try another path"}
+              <Button variant="outline" onClick={() => {
+                setRoadmap(null);
+                if (!isSubscribed) setTrialExpired(true);
+              }} className="flex-1">
+                {isAr ? "↩ جرب مساراً آخر" : "↩ Try another path"}
               </Button>
-              <Button onClick={handlePrint} className="flex-1 gap-2">
-                <Download className="h-4 w-4" />
-                {lang === "ar" ? "حفظ / طباعة الخارطة" : "Save / Print Roadmap"}
+
+              {/* Share button — for all users */}
+              <Button
+                variant="outline"
+                onClick={handleShare}
+                className="flex-1 gap-2 border-primary/30 text-primary hover:bg-primary/5"
+              >
+                <Share2 className="h-4 w-4" />
+                {shareSuccess
+                  ? (isAr ? "✓ تم النسخ!" : "✓ Copied!")
+                  : (isAr ? "شارك مساري المهني" : "Share My Career Path")}
               </Button>
+
+              {isSubscribed && (
+                <Button onClick={handlePrint} className="flex-1 gap-2">
+                  <Download className="h-4 w-4" />
+                  {isAr ? "حفظ / طباعة الخارطة" : "Save / Print Roadmap"}
+                </Button>
+              )}
             </div>
+
+            {/* Subscribe CTA for non-subscribers after seeing partial results */}
+            {!isSubscribed && (
+              <div className="border-2 border-primary/25 bg-gradient-to-br from-primary/5 to-background rounded-2xl p-8 text-center">
+                <Crown className="h-10 w-10 text-primary mx-auto mb-3 opacity-80" />
+                <h3 className="text-xl font-bold mb-2">
+                  {isAr ? "افتح مسارك الكامل مع نُور AI" : "Unlock Your Full Path with Noor AI"}
+                </h3>
+                <p className="text-muted-foreground text-sm mb-5 max-w-md mx-auto">
+                  {isAr
+                    ? "اشترك الآن للوصول الكامل لخارطة طريقك المهنية بكل مراحلها الأربع، والمواد الموصى بها، ومكتبة الدروس الكاملة."
+                    : "Subscribe now for full access to all 4 roadmap phases, recommended subjects, and the complete lesson library."}
+                </p>
+                <Button size="lg" asChild>
+                  <Link href="/subscribe">
+                    {isAr ? "اشترك الآن — 5$/شهر" : "Subscribe Now — $5/mo"}
+                  </Link>
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

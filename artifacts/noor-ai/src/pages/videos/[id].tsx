@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useRoute, Link } from "wouter";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/hooks/use-auth";
@@ -6,16 +6,18 @@ import {
   useGetVideo, getGetVideoQueryKey,
   useGetVideoCheckpoints, getGetVideoCheckpointsQueryKey,
   useSendChatMessage,
-  useRecordProgress
+  useRecordProgress,
+  useListVideos, getListVideosQueryKey,
 } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Brain, Play, Send, Lock, AlertTriangle, CheckCircle2, Circle, Clock, Maximize2, Minimize2 } from "lucide-react";
+import { Brain, Play, Send, Lock, AlertTriangle, CheckCircle2, Circle, Clock, Maximize2, Minimize2, Crown, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/language";
 import { apiClient } from "@/lib/api";
+import { sortVideos } from "@/lib/videoSort";
 
 declare global {
   interface Window {
@@ -106,6 +108,25 @@ export default function VideoPlayer() {
 
   const isSubscribed = user?.subscribed || user?.role === "admin";
 
+  // Free trial: fetch all videos to determine if this is the first of its category
+  const { data: allVideos } = useListVideos(
+    {},
+    { query: { enabled: !isSubscribed, queryKey: getListVideosQueryKey() } }
+  );
+  const isFreeVideo = useMemo(() => {
+    if (isSubscribed) return false;
+    if (!allVideos || !video) return false;
+    const sorted = sortVideos(allVideos);
+    const seen = new Set<string>();
+    for (const v of sorted) {
+      if (!seen.has(v.subject)) {
+        seen.add(v.subject);
+        if (v.id === videoId) return true;
+      }
+    }
+    return false;
+  }, [allVideos, video, videoId, isSubscribed]);
+
   const [playerReady, setPlayerReady] = useState(false);
   const [realDuration, setRealDuration] = useState(0);
   const playerRef = useRef<any>(null);
@@ -163,7 +184,8 @@ export default function VideoPlayer() {
   useEffect(() => { showCheckpointPopupRef.current = showCheckpointPopup; }, [showCheckpointPopup]);
 
   useEffect(() => {
-    if (!isSubscribed) return;
+    // Allow both subscribers AND free-trial video watchers to load the player
+    if (!isSubscribed && !isFreeVideo) return;
     const loadAPI = () => {
       if (!window.YT) {
         const tag = document.createElement("script");
@@ -178,10 +200,10 @@ export default function VideoPlayer() {
     };
     loadAPI();
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [isSubscribed]);
+  }, [isSubscribed, isFreeVideo]);
 
   useEffect(() => {
-    if (!isSubscribed || !playerReady || !video?.youtubeId || playerRef.current) return;
+    if ((!isSubscribed && !isFreeVideo) || !playerReady || !video?.youtubeId || playerRef.current) return;
     playerRef.current = new window.YT.Player(`yt-player-${videoId}`, {
       height: "100%",
       width: "100%",
@@ -256,6 +278,8 @@ export default function VideoPlayer() {
           const results = checkpointResultsRef.current;
           const popupOpen = showCheckpointPopupRef.current;
           if (popupOpen) return;
+          // Checkpoints only for subscribers, not free-trial viewers
+          if (!isSubscribed) return;
           const upcoming = cps.find(cp => !results[cp.id] && Math.abs(t - cp.timestampSeconds) < 1.5);
           if (upcoming) {
             playerRef.current.pauseVideo();
@@ -366,7 +390,8 @@ export default function VideoPlayer() {
     );
   }
 
-  if (!isSubscribed) {
+  // Hard paywall — only for non-subscribers on non-free videos
+  if (!isSubscribed && !isFreeVideo) {
     return <AppLayout><FullPaywall lang={lang} /></AppLayout>;
   }
 
@@ -539,21 +564,51 @@ export default function VideoPlayer() {
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">{video.subject}</span>
-                <span className="text-xs text-muted-foreground bg-muted px-2.5 py-0.5 rounded-md flex items-center gap-1.5">
-                  <Brain className="h-3 w-3" />
-                  {lang === "ar" ? `${activeCheckpoints.length} محطات تفاعلية` : `${activeCheckpoints.length} interactive stops`}
-                </span>
+                {isSubscribed && (
+                  <span className="text-xs text-muted-foreground bg-muted px-2.5 py-0.5 rounded-md flex items-center gap-1.5">
+                    <Brain className="h-3 w-3" />
+                    {lang === "ar" ? `${activeCheckpoints.length} محطات تفاعلية` : `${activeCheckpoints.length} interactive stops`}
+                  </span>
+                )}
+                {!isSubscribed && isFreeVideo && (
+                  <span className="text-xs font-semibold text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30 px-2.5 py-0.5 rounded-md flex items-center gap-1.5">
+                    <Sparkles className="h-3 w-3" />
+                    {lang === "ar" ? "تجربة مجانية" : "Free Trial"}
+                  </span>
+                )}
               </div>
               <h1 className="text-xl md:text-2xl font-bold">{video.title}</h1>
               {video.description && <p className="text-muted-foreground text-sm leading-relaxed">{video.description}</p>}
             </div>
+
+            {/* Free-trial upgrade banner — shown only for non-subscribers */}
+            {!isSubscribed && isFreeVideo && (
+              <div className="border-2 border-primary/25 bg-gradient-to-r from-primary/8 to-primary/4 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4">
+                <Crown className="h-8 w-8 text-primary shrink-0" />
+                <div className="flex-1 text-center sm:text-start">
+                  <p className="font-bold text-sm mb-0.5">
+                    {lang === "ar" ? "أنت تشاهد درساً مجانياً — تجربة نُور AI" : "You're watching a free lesson — Noor AI Trial"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {lang === "ar"
+                      ? "اشترك للوصول الكامل: جميع الدروس + المعلم الذكي السقراطي + المحطات التفاعلية."
+                      : "Subscribe for full access: all lessons + Socratic AI tutor + interactive checkpoints."}
+                  </p>
+                </div>
+                <Button asChild size="sm" className="shrink-0">
+                  <Link href="/subscribe">
+                    {lang === "ar" ? "اشترك — 5$/شهر" : "Subscribe — $5/mo"}
+                  </Link>
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* ─── RIGHT: Smart Sidebar ─── */}
           <div className="lg:w-[300px] xl:w-[320px] shrink-0 flex flex-col gap-4">
 
-            {/* Checkpoint Progress Panel */}
-            <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+            {/* Checkpoint Progress Panel — subscribers only */}
+            {!isSubscribed && isFreeVideo ? null : <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
               <div className="bg-gradient-to-r from-primary/10 to-transparent border-b px-4 py-3">
                 <div className="flex items-center gap-2">
                   <Brain className="h-4 w-4 text-primary shrink-0" />
@@ -617,7 +672,7 @@ export default function VideoPlayer() {
                   </span>
                 </div>
               </div>
-            </div>
+            </div>}
 
             {/* Noor AI Chat Panel */}
             <div

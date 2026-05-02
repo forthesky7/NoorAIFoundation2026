@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { PlayCircle, Search, FilterX, Lock, Send, CheckCircle2, MessageSquareDot } from "lucide-react";
-import { Link } from "wouter";
-import { useState, useEffect } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { PlayCircle, Search, FilterX, Lock, Send, CheckCircle2, MessageSquareDot, Sparkles, Crown } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { useState, useEffect, useMemo } from "react";
 import { useLang, DEFAULT_CATEGORIES, getCategoryLabel } from "@/lib/language";
 import { useAuth } from "@/hooks/use-auth";
 import { apiClient } from "@/lib/api";
@@ -28,9 +29,12 @@ const SCROLL_KEY = "noor_library_scroll";
 export default function Videos() {
   const { t, lang } = useLang();
   const { user } = useAuth();
+  const [, navigate] = useLocation();
   const isSubscribed = user?.subscribed || user?.role === "admin";
+
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("all");
+  const [paywallModal, setPaywallModal] = useState(false);
 
   const [suggestionText, setSuggestionText] = useState("");
   const [suggestionSubmitted, setSuggestionSubmitted] = useState(false);
@@ -57,7 +61,20 @@ export default function Videos() {
     sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
   };
 
-  const sorted = videos ? sortVideos(videos) : [];
+  const sorted = useMemo(() => videos ? sortVideos(videos) : [], [videos]);
+
+  // First video per category = free trial video
+  const freeVideoIds = useMemo(() => {
+    const seen = new Set<string>();
+    const ids = new Set<number>();
+    for (const v of sorted) {
+      if (!seen.has(v.subject)) {
+        seen.add(v.subject);
+        ids.add(v.id);
+      }
+    }
+    return ids;
+  }, [sorted]);
 
   const filtered = sorted.filter(v => {
     const target = `${v.title} ${v.description || ""} ${v.subject}`;
@@ -69,6 +86,15 @@ export default function Videos() {
 
   const clearFilters = () => { setSearch(""); setCategory("all"); };
   const hasFilters = !!search || category !== "all";
+
+  const handleVideoClick = (video: { id: number }) => {
+    saveScrollPosition();
+    if (isSubscribed || freeVideoIds.has(video.id)) {
+      navigate(`/videos/${video.id}`);
+    } else {
+      setPaywallModal(true);
+    }
+  };
 
   const handleSuggestion = async () => {
     if (!suggestionText.trim()) return;
@@ -88,6 +114,33 @@ export default function Videos() {
 
   return (
     <AppLayout>
+      {/* Paywall Modal for non-subscribers clicking locked videos */}
+      <Dialog open={paywallModal} onOpenChange={setPaywallModal}>
+        <DialogContent className="max-w-md text-center p-8">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-5 ring-4 ring-primary/10">
+            <Crown className="h-8 w-8 text-primary" />
+          </div>
+          <h2 className="text-xl font-bold mb-3">
+            {lang === "ar" ? "محتوى حصري للمشتركين" : "Exclusive Subscriber Content"}
+          </h2>
+          <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+            {lang === "ar"
+              ? "هذا المحتوى حصري لمشتركي نُور AI. انضم الآن لفتح المسار الكامل وإتقان مهاراتك."
+              : "This content is exclusive to subscribers. Join Noor AI to unlock the full path and master your skills."}
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button asChild size="lg" className="w-full">
+              <Link href="/subscribe" onClick={() => setPaywallModal(false)}>
+                {lang === "ar" ? "اشترك الآن — 5$/شهر" : "Subscribe Now — $5/mo"}
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setPaywallModal(false)}>
+              {lang === "ar" ? "متابعة التصفح" : "Continue Browsing"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
           <div>
@@ -95,11 +148,17 @@ export default function Videos() {
             <p className="text-muted-foreground mt-2">{t.videoLibraryDesc}</p>
           </div>
           {!isSubscribed && (
-            <Button asChild>
-              <Link href="/subscribe">
-                {lang === "ar" ? "🔓 فعّل الاشتراك للتشغيل" : "🔓 Subscribe to Play"}
-              </Link>
-            </Button>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-3 py-1.5 rounded-full font-medium border border-primary/20">
+                <Sparkles className="h-3 w-3" />
+                {lang === "ar" ? "تجربة مجانية — أول درس لكل قسم" : "Free Trial — First lesson per section"}
+              </div>
+              <Button asChild size="sm">
+                <Link href="/subscribe">
+                  {lang === "ar" ? "🔓 فعّل الاشتراك" : "🔓 Subscribe"}
+                </Link>
+              </Button>
+            </div>
           )}
         </div>
 
@@ -149,86 +208,87 @@ export default function Videos() {
           </div>
         ) : filtered.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map(video =>
-              isSubscribed ? (
-                <div key={video.id} onClick={saveScrollPosition}>
-                  <Link href={`/videos/${video.id}`}>
-                    <Card className="overflow-hidden flex flex-col hover-elevate transition-all border-border/50 group cursor-pointer hover:border-primary/40 hover:shadow-md h-full">
-                      <div className="relative aspect-video bg-muted overflow-hidden">
-                        {video.thumbnailUrl ? (
-                          <img
-                            src={video.thumbnailUrl}
-                            alt={video.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-secondary/50 text-muted-foreground">
-                            <PlayCircle className="h-10 w-10 opacity-50" />
-                          </div>
-                        )}
+            {filtered.map(video => {
+              const isFree = freeVideoIds.has(video.id);
+              const canPlay = isSubscribed || isFree;
+
+              return (
+                <div key={video.id}>
+                  <Card
+                    onClick={() => handleVideoClick(video)}
+                    className={`overflow-hidden flex flex-col transition-all border-border/50 group cursor-pointer hover:shadow-md h-full
+                      ${canPlay ? "hover:border-primary/40" : "hover:border-primary/60"}`}
+                  >
+                    <div className="relative aspect-video bg-muted overflow-hidden">
+                      {video.thumbnailUrl ? (
+                        <img
+                          src={video.thumbnailUrl}
+                          alt={video.title}
+                          className={`w-full h-full object-cover transition-all duration-300
+                            ${canPlay ? "group-hover:scale-105" : "opacity-60 group-hover:opacity-50"}`}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-secondary/50 text-muted-foreground">
+                          <PlayCircle className={`h-10 w-10 ${canPlay ? "opacity-50" : "opacity-30"}`} />
+                        </div>
+                      )}
+
+                      {/* Free trial badge */}
+                      {isFree && !isSubscribed && (
+                        <div className="absolute top-2 start-2 z-10 flex items-center gap-1 bg-green-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-full shadow">
+                          <Sparkles className="h-2.5 w-2.5" />
+                          {lang === "ar" ? "مجاني" : "Free"}
+                        </div>
+                      )}
+
+                      {canPlay ? (
                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           <PlayCircle className="h-16 w-16 text-white drop-shadow-lg" />
                         </div>
-                        <div className="absolute bottom-2 end-2 bg-black/70 text-white text-xs px-2 py-1 rounded font-medium">
-                          {formatDuration(video.duration)}
-                        </div>
-                      </div>
-                      <CardContent className="p-5 flex-1 flex flex-col gap-2">
-                        <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md self-start">
-                          {getCategoryLabel(video.subject, lang)}
-                        </span>
-                        <h3 className="font-semibold text-base line-clamp-2 flex-1">{video.title}</h3>
-                        {video.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-2">{video.description}</p>
-                        )}
-                        {/* "Ask Noor" styled frame */}
-                        <div className="mt-auto border border-primary/25 bg-primary/5 rounded-lg px-3 py-2 flex items-center gap-2 text-primary text-xs font-medium">
-                          <MessageSquareDot className="h-3.5 w-3.5 shrink-0" />
-                          <span>{lang === "ar" ? "اسأل مساعد الأستاذ الذكي" : "Ask the AI Smart Assistant"}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                </div>
-              ) : (
-                <div key={video.id} onClick={saveScrollPosition}>
-                  <Link href="/subscribe">
-                    <Card className="overflow-hidden flex flex-col transition-all border-border/50 group cursor-pointer hover:border-primary/60 hover:shadow-md h-full">
-                      <div className="relative aspect-video bg-muted overflow-hidden">
-                        {video.thumbnailUrl ? (
-                          <img
-                            src={video.thumbnailUrl}
-                            alt={video.title}
-                            className="w-full h-full object-cover opacity-60 group-hover:opacity-50 transition-opacity"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-secondary/50 text-muted-foreground">
-                            <PlayCircle className="h-10 w-10 opacity-30" />
-                          </div>
-                        )}
+                      ) : (
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/10 flex flex-col items-center justify-center gap-2">
                           <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center">
                             <Lock className="h-5 w-5 text-white" />
                           </div>
-                          <span className="text-white text-xs font-semibold bg-primary/80 px-3 py-1 rounded-full">
-                            {lang === "ar" ? "اشترك للتشغيل" : "Subscribe to Play"}
+                        </div>
+                      )}
+
+                      <div className="absolute bottom-2 end-2 bg-black/70 text-white text-xs px-2 py-1 rounded font-medium">
+                        {formatDuration(video.duration)}
+                      </div>
+                    </div>
+
+                    <CardContent className="p-5 flex-1 flex flex-col gap-2">
+                      <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md self-start">
+                        {getCategoryLabel(video.subject, lang)}
+                      </span>
+                      <h3 className={`font-semibold text-base line-clamp-2 flex-1 ${!canPlay ? "text-muted-foreground" : ""}`}>
+                        {video.title}
+                      </h3>
+                      {video.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">{video.description}</p>
+                      )}
+
+                      {canPlay ? (
+                        /* "Ask Noor" styled frame — updated text + stronger border */
+                        <div className="mt-auto border-2 border-primary/30 bg-gradient-to-r from-primary/8 to-primary/4 rounded-xl px-3 py-2.5 flex items-center gap-2 text-primary text-xs font-semibold shadow-sm">
+                          <MessageSquareDot className="h-3.5 w-3.5 shrink-0 text-primary" />
+                          <span>
+                            {lang === "ar"
+                              ? "اسأل مساعد الأستاذ الذكي - ناقش مع نُور"
+                              : "Ask the Smart Teacher Assistant - Discuss with Noor"}
                           </span>
                         </div>
-                      </div>
-                      <CardContent className="p-5 flex-1 flex flex-col gap-2">
-                        <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md self-start">
-                          {getCategoryLabel(video.subject, lang)}
-                        </span>
-                        <h3 className="font-semibold text-base line-clamp-2 text-muted-foreground flex-1">{video.title}</h3>
+                      ) : (
                         <div className="mt-auto w-full h-9 bg-primary rounded-lg flex items-center justify-center gap-2 text-primary-foreground text-xs font-semibold group-hover:bg-primary/90 transition-colors">
                           {lang === "ar" ? "فعّل الاشتراك — 5$/شهر" : "Unlock Premium — $5/mo"}
                         </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
-              )
-            )}
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-24 bg-card rounded-2xl border border-dashed">
