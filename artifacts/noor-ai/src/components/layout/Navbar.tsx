@@ -55,6 +55,12 @@ export function Navbar() {
       <Link href="/future" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
         {t.futureSimulator}
       </Link>
+      <Link href="/leaderboard" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+        {t.leaderboard}
+      </Link>
+      <Link href="/influencers" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+        {t.influencers}
+      </Link>
       {isOwner && (
         <Link href="/admin-noor" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
           <Settings className="h-3.5 w-3.5" />
