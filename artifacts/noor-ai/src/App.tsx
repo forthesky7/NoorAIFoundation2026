@@ -16,6 +16,9 @@ import FutureSimulator from "@/pages/future";
 import Subscribe from "@/pages/subscribe";
 import AdminPanel from "@/pages/admin/index";
 import AdminNoor from "@/pages/admin-noor/index";
+import Terms from "@/pages/terms";
+import Privacy from "@/pages/privacy";
+import Refund from "@/pages/refund";
 import NotFound from "@/pages/not-found";
 
 const OWNER_EMAIL = "forthesky7@gmail.com";
@@ -66,6 +69,10 @@ function Router() {
       <Route path="/subscribe"><ProtectedRoute component={Subscribe} /></Route>
       <Route path="/admin"><ProtectedRoute component={AdminPanel} adminOnly={true} /></Route>
       <Route path="/admin-noor"><ProtectedRoute component={AdminNoor} ownerOnly={true} /></Route>
+
+      <Route path="/terms" component={Terms} />
+      <Route path="/privacy" component={Privacy} />
+      <Route path="/refund" component={Refund} />
 
       <Route component={NotFound} />
     </Switch>
