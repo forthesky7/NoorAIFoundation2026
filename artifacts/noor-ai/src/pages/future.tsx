@@ -220,10 +220,6 @@ export default function FutureSimulator() {
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { font-family: 'IBM Plex Sans Arabic', Arial, sans-serif; background: #fff; color: #111827; padding: 28px 32px; font-size: 11pt; line-height: 1.6; }
-  .brand { display: flex; align-items: center; gap: 10px; padding-bottom: 16px; border-bottom: 2px solid #e5e7eb; margin-bottom: 22px; }
-  .brand-icon { width: 40px; height: 40px; border-radius: 50%; background: #0ea5e9; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 18px; }
-  .brand-name { font-size: 16pt; font-weight: 800; color: #0ea5e9; }
-  .brand-date { margin-${isAr ? "right" : "left"}: auto; font-size: 9pt; color: #9ca3af; }
   .roadmap-title { font-size: 20pt; font-weight: 800; color: #111827; margin-bottom: 8px; }
   .roadmap-summary { font-size: 11pt; color: #4b5563; margin-bottom: 16px; line-height: 1.7; }
   .careers { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
@@ -249,12 +245,6 @@ export default function FutureSimulator() {
 </style>
 </head>
 <body>
-<div class="brand">
-  <div class="brand-icon">ن</div>
-  <div class="brand-name">NOOR AI &mdash; ${isAr ? "محاكي المستقبل" : "Future Simulator"}</div>
-  <div class="brand-date">${date}</div>
-</div>
-
 <div class="roadmap-title">${title}</div>
 <div class="roadmap-summary">${roadmap?.summary || ""}</div>
 
@@ -292,7 +282,6 @@ ${roadmap?.recommendedSubjects?.length ? `<div class="subjects">
   <div>${(roadmap.recommendedSubjects as string[]).map((s: string) => `<span class="subject-badge">${s}</span>`).join("")}</div>
 </div>` : ""}
 
-<div class="footer">NOOR AI &bull; ${window.location.hostname} &bull; ${isAr ? "جميع الحقوق محفوظة" : "All rights reserved"}</div>
 
 <script>setTimeout(()=>{window.print();},600);</script>
 </body></html>`);

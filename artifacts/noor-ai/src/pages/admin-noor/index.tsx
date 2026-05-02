@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   PlayCircle, Users, CreditCard, Plus, Trash2, Link2, Upload,
   CheckCircle2, AlertCircle, Search, UserCheck, Send, Settings, Tag, X, MessageSquare, Clock, KeyRound,
-  ArrowUp, ArrowDown
+  ArrowUp, ArrowDown, Star
 } from "lucide-react";
 import { apiClient } from "@/lib/api";
 
@@ -44,6 +44,7 @@ const CATEGORIES = [
 type BulkStatus = { url: string; status: "pending" | "success" | "error"; message?: string };
 type AdminUser = { id: number; name: string; email: string; role: string; subscribed: boolean; createdAt: string };
 type LessonRequest = { id: string; text: string; userId: number; email?: string; date: string };
+type InfluencerRequest = { id: number; name: string; platform: string; followers: number; handle: string; email: string; message: string; created_at: string };
 
 export default function AdminNoor() {
   const { t, lang } = useLang();
@@ -86,6 +87,10 @@ export default function AdminNoor() {
   const [requestsLoading, setRequestsLoading] = useState(false);
   const [deletingRequestId, setDeletingRequestId] = useState<string | null>(null);
 
+  // Influencer Requests
+  const [influencerRequests, setInfluencerRequests] = useState<InfluencerRequest[]>([]);
+  const [influencerLoading, setInfluencerLoading] = useState(false);
+
   const fetchRequests = async () => {
     setRequestsLoading(true);
     try {
@@ -100,6 +105,15 @@ export default function AdminNoor() {
     await apiClient.delete(`/requests/${id}`).catch(() => {});
     setRequests(prev => prev.filter(r => r.id !== id));
     setDeletingRequestId(null);
+  };
+
+  const fetchInfluencerRequests = async () => {
+    setInfluencerLoading(true);
+    try {
+      const res = await apiClient.get("/influencer/requests");
+      if (res.ok) setInfluencerRequests(await res.json());
+    } catch { /* ignore */ }
+    setInfluencerLoading(false);
   };
 
   // Telegram link
@@ -162,7 +176,7 @@ export default function AdminNoor() {
     setUsersLoading(false);
   };
 
-  useEffect(() => { fetchUsers(); fetchRequests(); }, []);
+  useEffect(() => { fetchUsers(); fetchRequests(); fetchInfluencerRequests(); }, []);
 
   useEffect(() => {
     apiClient.get("/admin/settings").then(async r => {
@@ -837,6 +851,54 @@ export default function AdminNoor() {
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Influencer Requests */}
+          <div className="mt-10">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <Star className="h-5 w-5 text-yellow-500" />
+                {lang === "ar" ? "طلبات المؤثرين" : "Influencer Requests"}
+                {influencerRequests.length > 0 && (
+                  <Badge className="bg-yellow-500 text-white">{influencerRequests.length}</Badge>
+                )}
+              </h2>
+              <Button variant="outline" size="sm" onClick={fetchInfluencerRequests}>
+                {lang === "ar" ? "تحديث" : "Refresh"}
+              </Button>
+            </div>
+            {influencerLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 rounded-lg" />)}
+              </div>
+            ) : influencerRequests.length === 0 ? (
+              <div className="text-center py-10 text-muted-foreground border rounded-lg bg-card">
+                <Star className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">{lang === "ar" ? "لا توجد طلبات مؤثرين بعد" : "No influencer requests yet"}</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {influencerRequests.map(r => (
+                  <div key={r.id} className="bg-card border rounded-lg p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="font-semibold text-sm">{r.name}</span>
+                          <Badge variant="secondary" className="text-xs capitalize">{r.platform}</Badge>
+                          <Badge variant="outline" className="text-xs">{r.followers.toLocaleString()} {lang === "ar" ? "متابع" : "followers"}</Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground font-mono mb-1">@{r.handle} · {r.email}</p>
+                        {r.message && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{r.message}</p>}
+                      </div>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1 shrink-0">
+                        <Clock className="h-3 w-3" />
+                        {new Date(r.created_at).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US")}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>

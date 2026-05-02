@@ -4,6 +4,15 @@ import { sql } from "drizzle-orm";
 
 const router = Router();
 
+router.get("/influencer/requests", async (_req, res) => {
+  try {
+    const rows = await db.execute(sql`SELECT * FROM influencer_requests ORDER BY created_at DESC`);
+    return res.json(rows.rows);
+  } catch {
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
 router.post("/influencer/apply", async (req, res) => {
   try {
     const { name, platform, followers, handle, email, message } = req.body as Record<string, any>;
