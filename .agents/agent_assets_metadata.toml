@@ -24,3 +24,15 @@ id = "ka0Hx6QibruG4xZzWOxfD"
 uri = "file://screenshots/promo-full.jpg"
 type = "image"
 title = "Full Page — All Sections (1280×3000)"
+
+[[outputs]]
+id = "8TVwqnqMKirULfRFVoWjJ"
+uri = "file://screenshots/promo-hero-v2.jpg"
+type = "image"
+title = "Hero — Updated"
+
+[[outputs]]
+id = "6mcYfCQi_sOTAvhwYG9Xj"
+uri = "file://screenshots/promo-top-v2.jpg"
+type = "image"
+title = "Full Page v2 — All 5 Sections"
