@@ -34,13 +34,14 @@ export default function Login() {
   const { lang } = useLang();
   const [showPassword, setShowPassword] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
-  const [passwordDir, setPasswordDir] = useState<"ltr" | "rtl">("ltr");
+  const isAr = lang === "ar";
+  const [passwordDir, setPasswordDir] = useState<"ltr" | "rtl">(isAr ? "rtl" : "ltr");
   const handlePasswordInput = (e: React.FormEvent<HTMLInputElement>) => {
-    const hasArabic = /[\u0600-\u06FF]/.test((e.target as HTMLInputElement).value);
+    const val = (e.target as HTMLInputElement).value;
+    if (!val) { setPasswordDir(isAr ? "rtl" : "ltr"); return; }
+    const hasArabic = /[\u0600-\u06FF]/.test(val);
     setPasswordDir(hasArabic ? "rtl" : "ltr");
   };
-
-  const isAr = lang === "ar";
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -124,7 +125,7 @@ export default function Login() {
                             type={showPassword ? "text" : "password"}
                             dir={passwordDir}
                             autoComplete="current-password"
-                            className="pl-10"
+                            className={passwordDir === "rtl" ? "pr-10 text-right" : "pl-10 text-left"}
                             onInput={handlePasswordInput}
                             {...field}
                           />
@@ -132,7 +133,7 @@ export default function Login() {
                             type="button"
                             tabIndex={-1}
                             onClick={() => setShowPassword(v => !v)}
-                            className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground hover:text-foreground transition-colors"
+                            className={`absolute inset-y-0 ${passwordDir === "rtl" ? "right-0 pr-3" : "left-0 pl-3"} flex items-center text-muted-foreground hover:text-foreground transition-colors`}
                             aria-label={showPassword ? "Hide password" : "Show password"}
                           >
                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

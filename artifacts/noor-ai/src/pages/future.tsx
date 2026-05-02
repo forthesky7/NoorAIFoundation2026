@@ -199,14 +199,25 @@ export default function FutureSimulator() {
   // For non-subscribers, only show the first 2 steps; blur the rest
   const FREE_STEPS = 2;
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     const printArea = document.getElementById("roadmap-print-area");
     if (!printArea) { window.print(); return; }
+
+    // Fetch the logo and encode as base64 so it renders in the detached popup window
+    let logoSrc = "";
+    try {
+      const resp = await fetch("/logo.jpg");
+      const blob = await resp.blob();
+      logoSrc = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+    } catch { /* fall back to CSS circle */ }
 
     const pw = window.open("", "_blank", "width=960,height=800");
     if (!pw) { window.print(); return; }
 
-    const date = new Date().toLocaleDateString(isAr ? "ar-SA" : "en-US", { year: "numeric", month: "long", day: "numeric" });
     const title = roadmap?.title || (isAr ? "خارطة طريقي المهنية" : "My Career Roadmap");
 
     pw.document.write(`<!DOCTYPE html>
@@ -220,6 +231,9 @@ export default function FutureSimulator() {
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { font-family: 'IBM Plex Sans Arabic', Arial, sans-serif; background: #fff; color: #111827; padding: 28px 32px; font-size: 11pt; line-height: 1.6; }
+  .logo-header { text-align: center; padding-bottom: 20px; margin-bottom: 22px; border-bottom: 2px solid #e5e7eb; }
+  .logo-img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto; }
+  .logo-fallback { width: 72px; height: 72px; border-radius: 50%; background: #0ea5e9; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 28px; margin: 0 auto; }
   .roadmap-title { font-size: 20pt; font-weight: 800; color: #111827; margin-bottom: 8px; }
   .roadmap-summary { font-size: 11pt; color: #4b5563; margin-bottom: 16px; line-height: 1.7; }
   .careers { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
@@ -240,11 +254,15 @@ export default function FutureSimulator() {
   .subjects { border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 14px 18px; margin-top: 14px; }
   .subjects-title { font-size: 12pt; font-weight: 700; margin-bottom: 10px; }
   .subject-badge { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 16px; padding: 4px 12px; font-size: 9pt; display: inline-block; margin: 3px; }
-  .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #e5e7eb; font-size: 8pt; color: #9ca3af; text-align: center; }
   @media print { body { padding: 16px 20px; } }
 </style>
 </head>
 <body>
+<div class="logo-header">
+  ${logoSrc
+    ? `<img src="${logoSrc}" alt="NOOR AI" class="logo-img" />`
+    : `<div class="logo-fallback">ن</div>`}
+</div>
 <div class="roadmap-title">${title}</div>
 <div class="roadmap-summary">${roadmap?.summary || ""}</div>
 
