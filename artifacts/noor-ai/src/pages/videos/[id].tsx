@@ -280,8 +280,7 @@ export default function VideoPlayer() {
           const results = checkpointResultsRef.current;
           const popupOpen = showCheckpointPopupRef.current;
           if (popupOpen) return;
-          // Checkpoints only for subscribers, not free-trial viewers
-          if (!isSubscribed) return;
+          // Checkpoints fire for both subscribers AND free-trial viewers
           const upcoming = cps.find(cp => !results[cp.id] && Math.abs(t - cp.timestampSeconds) < 1.5);
           if (upcoming) {
             playerRef.current.pauseVideo();
@@ -566,12 +565,10 @@ export default function VideoPlayer() {
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">{video.subject}</span>
-                {isSubscribed && (
-                  <span className="text-xs text-muted-foreground bg-muted px-2.5 py-0.5 rounded-md flex items-center gap-1.5">
-                    <Brain className="h-3 w-3" />
-                    {lang === "ar" ? `${activeCheckpoints.length} محطات تفاعلية` : `${activeCheckpoints.length} interactive stops`}
-                  </span>
-                )}
+                <span className="text-xs text-muted-foreground bg-muted px-2.5 py-0.5 rounded-md flex items-center gap-1.5">
+                  <Brain className="h-3 w-3" />
+                  {lang === "ar" ? `${activeCheckpoints.length} محطات تفاعلية` : `${activeCheckpoints.length} interactive stops`}
+                </span>
                 {!isSubscribed && isFreeVideo && (
                   <span className="text-xs font-semibold text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30 px-2.5 py-0.5 rounded-md flex items-center gap-1.5">
                     <Sparkles className="h-3 w-3" />
@@ -589,12 +586,12 @@ export default function VideoPlayer() {
                 <Crown className="h-8 w-8 text-primary shrink-0" />
                 <div className="flex-1 text-center sm:text-start">
                   <p className="font-bold text-sm mb-0.5">
-                    {lang === "ar" ? "أنت تشاهد درساً مجانياً — تجربة نُور AI" : "You're watching a free lesson — Noor AI Trial"}
+                    {lang === "ar" ? "أنت تجرّب التوقف الذكي السقراطي مجاناً!" : "You're experiencing the Socratic Smart Pause for free!"}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {lang === "ar"
-                      ? "اشترك للوصول الكامل: جميع الدروس + المعلم الذكي السقراطي + المحطات التفاعلية."
-                      : "Subscribe for full access: all lessons + Socratic AI tutor + interactive checkpoints."}
+                      ? "اشترك للوصول الكامل لجميع الدروس بنفس هذه الميزات الذكية — 5$ شهرياً فقط."
+                      : "Subscribe for full access to all lessons with these same smart features — only $5/month."}
                   </p>
                 </div>
                 <Button asChild size="sm" className="shrink-0">
@@ -609,8 +606,8 @@ export default function VideoPlayer() {
           {/* ─── RIGHT: Smart Sidebar ─── */}
           <div className="lg:w-[300px] xl:w-[320px] shrink-0 flex flex-col gap-4">
 
-            {/* Checkpoint Progress Panel — subscribers only */}
-            {!isSubscribed && isFreeVideo ? null : <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+            {/* Checkpoint Progress Panel — shown for all permitted viewers */}
+            <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
               <div className="bg-gradient-to-r from-primary/10 to-transparent border-b px-4 py-3">
                 <div className="flex items-center gap-2">
                   <Brain className="h-4 w-4 text-primary shrink-0" />
@@ -674,20 +671,21 @@ export default function VideoPlayer() {
                   </span>
                 </div>
               </div>
-            </div>}
+            </div>
 
             {/* Noor AI Chat Panel */}
             <div
-              className={`flex flex-col rounded-xl border bg-card shadow-sm overflow-hidden transition-all duration-300 ${chatExpanded ? "fixed inset-4 z-50 shadow-2xl" : ""}`}
+              className={`flex flex-col rounded-xl border-2 border-primary/30 bg-gradient-to-b from-primary/5 to-card shadow-sm overflow-hidden transition-all duration-300 ${chatExpanded ? "fixed inset-4 z-50 shadow-2xl" : ""}`}
               style={chatExpanded ? {} : { height: "calc(100vh - 440px)", minHeight: "300px" }}
             >
-              <div className="flex items-center gap-3 px-4 py-3 border-b bg-gradient-to-r from-primary/8 to-transparent shrink-0">
+              <div className="flex items-center gap-3 px-4 py-3 border-b border-primary/15 bg-gradient-to-r from-primary/10 to-transparent shrink-0">
                 <NoorAvatar size={30} />
-                <div className="flex-1">
-                  <div className="font-semibold text-sm">{lang === "ar" ? "نُور AI — معلمك الذكي" : "Noor AI — Smart Tutor"}</div>
-                  <div className="text-xs text-green-600 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                    {lang === "ar" ? "متصل ومستعد" : "Online"}
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-sm leading-tight">
+                    {lang === "ar" ? "اسأل مساعد الأستاذ الذكي" : "Ask the Smart Teacher Assistant"}
+                  </div>
+                  <div className="text-xs text-primary/70 font-medium truncate">
+                    {lang === "ar" ? "ناقش مع نُور — التوقف الذكي السقراطي" : "Discuss with Noor — Socratic Smart Pause"}
                   </div>
                 </div>
                 <Button
