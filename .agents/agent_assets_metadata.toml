@@ -1,0 +1,26 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "R4ZSNAC7HCTiujlePMrZs"
+uri = "file://screenshots/promo-hero.jpg"
+type = "image"
+title = "Section 1 — Hero (1280×720)"
+
+[[outputs]]
+id = "DObu9gvciMlz1gD_Li4Is"
+uri = "file://screenshots/promo-courses.jpg"
+type = "image"
+title = "Section 2 — Stats Bar & 318 Lessons (1280×900)"
+
+[[outputs]]
+id = "okUiCIFevvFW3-xmUptZs"
+uri = "file://screenshots/promo-simulator-tips.jpg"
+type = "image"
+title = "Sections 3 & 4 — محاكي + Categories Grid (1280×2200)"
+
+[[outputs]]
+id = "ka0Hx6QibruG4xZzWOxfD"
+uri = "file://screenshots/promo-full.jpg"
+type = "image"
+title = "Full Page — All Sections (1280×3000)"

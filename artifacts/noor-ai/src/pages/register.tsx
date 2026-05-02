@@ -88,7 +88,7 @@ export default function Register() {
                     <FormItem>
                       <FormLabel>{lang === "ar" ? "الاسم الكامل" : "Full Name"}</FormLabel>
                       <FormControl>
-                        <Input placeholder={lang === "ar" ? "محمد العلي" : "John Doe"} autoComplete="name" {...field} />
+                        <Input placeholder={lang === "ar" ? "محمد العلي" : "John Doe"} autoComplete="name" dir="auto" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

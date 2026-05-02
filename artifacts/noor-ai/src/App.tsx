@@ -21,6 +21,7 @@ import Privacy from "@/pages/privacy";
 import Refund from "@/pages/refund";
 import Leaderboard from "@/pages/leaderboard";
 import Influencers from "@/pages/influencers";
+import Promo from "@/pages/promo";
 import NotFound from "@/pages/not-found";
 
 const OWNER_EMAIL = "forthesky7@gmail.com";
@@ -74,6 +75,7 @@ function Router() {
 
       <Route path="/leaderboard"><ProtectedRoute component={Leaderboard} /></Route>
       <Route path="/influencers" component={Influencers} />
+      <Route path="/promo" component={Promo} />
 
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />
