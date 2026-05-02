@@ -8,8 +8,8 @@ import {
 } from "lucide-react";
 
 const STATS = [
-  { number: "318", label: "درساً مكثفاً", sublabel: "في المكتبة" },
-  { number: "4", label: "مسارات تعليمية", sublabel: "قدرات · تحصيلي · مسارات · عام" },
+  { number: "مئات+", label: "درس تعليمي", sublabel: "والقادم أكثر.." },
+  { number: "4+", label: "مسارات تعليمية", sublabel: "مع إضافة المزيد مستقبلاً" },
   { number: "5$", label: "فقط شهرياً", sublabel: "وصول كامل غير محدود" },
 ];
 
@@ -18,41 +18,41 @@ const CATEGORIES = [
     icon: <Brain className="h-8 w-8" />,
     title: "قدرات",
     titleEn: "Qudurat",
-    desc: "دروس شاملة لاختبار القدرات العامة — لفظي وكمي — مع نقاط تحقق بالذكاء الاصطناعي تضمن الفهم الفعلي.",
+    desc: "دروس شاملة لاختبار القدرات العامة — لفظي وكمي — مع نقاط تحقق بالذكاء الاصطناعي تضمن الفهم الفعلي. والقادم أكثر..",
     color: "from-blue-500/10 to-blue-500/5",
     border: "border-blue-200 dark:border-blue-800",
     icon_bg: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-    count: "+120",
+    count: "متنامٍ",
   },
   {
     icon: <GraduationCap className="h-8 w-8" />,
     title: "تجميعات تحصيلي",
     titleEn: "Tahsili",
-    desc: "تجميعات وشرح معمّق لاختبار التحصيل الدراسي — علوم وأدبيات — بأسلوب الطريقة السقراطية.",
+    desc: "تجميعات وشرح معمّق لاختبار التحصيل الدراسي — علوم وأدبيات — بأسلوب الطريقة السقراطية. والقادم أكثر..",
     color: "from-violet-500/10 to-violet-500/5",
     border: "border-violet-200 dark:border-violet-800",
     icon_bg: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
-    count: "+130",
+    count: "متنامٍ",
   },
   {
     icon: <BookOpen className="h-8 w-8" />,
     title: "دروس مسارات ثانوي",
     titleEn: "Secondary Tracks",
-    desc: "مادة الثانوية بمساراتها المختلفة — علمي وأدبي — معبّأة في دروس مركّزة وفعّالة.",
+    desc: "مسارات الثانوي الحالية — علمي وأدبي — معبّأة في دروس مركّزة وفعّالة، مع إضافة المزيد مستقبلاً.",
     color: "from-amber-500/10 to-amber-500/5",
     border: "border-amber-200 dark:border-amber-800",
     icon_bg: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-    count: "+50",
+    count: "متنامٍ",
   },
   {
     icon: <Lightbulb className="h-8 w-8" />,
     title: "عام — نصائح ذهبية",
     titleEn: "General / Tips",
-    desc: "نصائح ما قبل الاختبار وأسرار الأداء العالي — محتوى يُعدّك نفسياً وذهنياً لتتفوق يوم الامتحان.",
+    desc: "مجموعة متجددة من النصائح الذهبية قبل الامتحانات — محتوى يُعدّك نفسياً وذهنياً لتتفوق يوم الاختبار.",
     color: "from-green-500/10 to-green-500/5",
     border: "border-green-200 dark:border-green-800",
     icon_bg: "bg-green-500/10 text-green-600 dark:text-green-400",
-    count: "+18",
+    count: "متجددة",
   },
 ];
 
@@ -97,7 +97,7 @@ export default function Promo() {
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-            318 درساً مكثفاً + مدرّس ذكاء اصطناعي سقراطي + محاكي المستقبل المهني — كل ما تحتاجه في مكان واحد، بـ 5$ شهرياً فقط.
+            مئات الدروس التعليمية وأكثر + مدرّس ذكاء اصطناعي سقراطي + محاكي المستقبل المهني — كل ما تحتاجه في مكان واحد، بـ 5$ شهرياً فقط.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -124,7 +124,7 @@ export default function Promo() {
         </div>
       </section>
 
-      {/* ─── SECTION A: 318 درساً ─────────────────────────────── */}
+      {/* ─── SECTION A: مئات الدروس ───────────────────────────── */}
       <section id="promo-courses" className="w-full py-20 bg-background">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="text-center mb-14">
@@ -133,7 +133,7 @@ export default function Promo() {
               المكتبة التعليمية
             </div>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-              318 درساً مكثفاً
+              مئات الدروس التعليمية وأكثر
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               تغطية شاملة لكل ما تحتاجه — من القدرات والتحصيلي إلى مسارات الثانوية والنصائح الذهبية قبل الاختبار.
@@ -263,7 +263,7 @@ export default function Promo() {
 
           <div className="mt-10 bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-900/20 dark:to-amber-900/10 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-8 text-center">
             <Lightbulb className="h-10 w-10 text-amber-500 mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">اشترك للوصول لكل نصائح الـ 18+ فيديو في فئة عام</h3>
+            <h3 className="text-xl font-bold mb-2">اشترك للوصول لمجموعتنا المتجددة من النصائح الذهبية في فئة عام</h3>
             <p className="text-muted-foreground mb-5 text-sm">
               من إدارة الوقت داخل قاعة الاختبار، إلى تقنيات حل الأسئلة المُركّبة — كل شيء موثّق بفيديوهات قصيرة ومركّزة.
             </p>
