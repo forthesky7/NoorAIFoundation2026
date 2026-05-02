@@ -153,6 +153,7 @@ export default function VideoPlayer() {
   const [chatMessage, setChatMessage] = useState("");
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
   const [isUnderstanding, setIsUnderstanding] = useState(false);
+  const [checkpointExpanded, setCheckpointExpanded] = useState(false);
 
   const [freeChatMessage, setFreeChatMessage] = useState("");
   const [freeChatHistory, setFreeChatHistory] = useState<Message[]>([]);
@@ -264,6 +265,7 @@ export default function VideoPlayer() {
     setChatHistory([]);
     setIsUnderstanding(false);
     setChatMessage("");
+    setCheckpointExpanded(false);
   }, []);
 
   const onPlayerStateChange = useCallback((event: any) => {
@@ -334,6 +336,7 @@ export default function VideoPlayer() {
   const handleResumeAfterCorrect = () => {
     setShowCheckpointPopup(false);
     setCurrentCheckpoint(null);
+    setCheckpointExpanded(false);
     playerRef.current?.playVideo();
   };
 
@@ -343,6 +346,7 @@ export default function VideoPlayer() {
     }
     setShowCheckpointPopup(false);
     setCurrentCheckpoint(null);
+    setCheckpointExpanded(false);
     playerRef.current?.playVideo();
     toast({ title: lang === "ar" ? "⚠️ تخطيت المحطة" : "⚠️ Stop skipped", description: lang === "ar" ? "المحطة تحولت رمادية. التعلم الحقيقي يأتي من المحاولة!" : "Stop turned grey. Real learning comes from trying!" });
   };
@@ -404,10 +408,13 @@ export default function VideoPlayer() {
     <AppLayout>
       {/* Checkpoint Modal — centered overlay over entire page */}
       {showCheckpointPopup && currentCheckpoint && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-lg bg-card rounded-2xl shadow-2xl border border-primary/20 overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
+          <div className={cn(
+            "w-full bg-background rounded-2xl shadow-2xl border border-primary/20 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200",
+            checkpointExpanded ? "max-w-3xl h-[92vh]" : "max-w-lg"
+          )}>
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-primary/15 via-primary/8 to-transparent border-b px-5 py-4 flex items-center gap-3">
+            <div className="bg-gradient-to-r from-primary/15 via-primary/8 to-transparent border-b px-5 py-4 flex items-center gap-3 shrink-0">
               <NoorAvatar size={46} />
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-base leading-tight">
@@ -418,14 +425,26 @@ export default function VideoPlayer() {
                   {lang === "ar" ? "متصل ومستعد للمساعدة" : "Online & ready to help"}
                 </div>
               </div>
-              <div className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full shrink-0">
-                {CHECKPOINT_LABELS[String(currentCheckpoint.id)]?.[lang === "ar" ? "ar" : "en"] || (lang === "ar" ? "وقفة تعليمية" : "Learning stop")}
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Expand / collapse button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setCheckpointExpanded(p => !p)}
+                  title={checkpointExpanded ? (lang === "ar" ? "تصغير" : "Collapse") : (lang === "ar" ? "تكبير" : "Expand")}
+                >
+                  {checkpointExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                </Button>
+                <div className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                  {CHECKPOINT_LABELS[String(currentCheckpoint.id)]?.[lang === "ar" ? "ar" : "en"] || (lang === "ar" ? "وقفة تعليمية" : "Learning stop")}
+                </div>
               </div>
             </div>
 
             {popupPhase === "simplify" ? (
               /* Phase 1 — Simplification */
-              <div className="p-5 space-y-4">
+              <div className={cn("p-5 space-y-4", checkpointExpanded && "flex-1 overflow-y-auto")}>
                 <div className="bg-primary/5 border border-primary/15 rounded-xl p-4 space-y-2">
                   <p className="text-xs font-semibold text-primary uppercase tracking-wide">
                     {lang === "ar" ? "🎯 تبسيط من نُور" : "🎯 Noor's Simplification"}
@@ -439,8 +458,12 @@ export default function VideoPlayer() {
               </div>
             ) : (
               /* Phase 2 — Socratic Chat */
-              <div className="flex flex-col">
-                <div className="max-h-64 overflow-y-auto p-4 space-y-3 bg-muted/10">
+              <div className="flex flex-col flex-1 min-h-0">
+                {/* Messages — solid opaque background, flex-1 when expanded */}
+                <div className={cn(
+                  "overflow-y-auto p-4 space-y-3 bg-background",
+                  checkpointExpanded ? "flex-1" : "max-h-72"
+                )}>
                   {chatHistory.map((msg, i) => (
                     <div key={i} className={cn("flex gap-2", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
                       {msg.role === "assistant" && <NoorAvatar size={26} />}
@@ -467,7 +490,8 @@ export default function VideoPlayer() {
                   <div ref={chatBottomRef} />
                 </div>
 
-                <div className="p-4 border-t bg-card/50">
+                {/* Input — always solid background */}
+                <div className="p-4 border-t bg-card shrink-0">
                   {isUnderstanding ? (
                     <Button onClick={handleResumeAfterCorrect} className="w-full h-12 text-base bg-green-600 hover:bg-green-700 text-white gap-2 font-semibold">
                       <Play className="h-5 w-5 fill-current" />
@@ -480,7 +504,7 @@ export default function VideoPlayer() {
                           placeholder={lang === "ar" ? "اكتب إجابتك بكلماتك الخاصة..." : "Write your answer in your own words..."}
                           value={chatMessage}
                           onChange={e => setChatMessage(e.target.value)}
-                          className="min-h-[56px] max-h-[120px] resize-none text-sm"
+                          className="min-h-[56px] max-h-[140px] resize-none text-sm bg-background"
                           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendAnswer(); } }}
                           autoFocus
                         />
@@ -675,9 +699,15 @@ export default function VideoPlayer() {
 
             {/* Noor AI Chat Panel */}
             <div
-              className={`flex flex-col rounded-xl border-2 border-primary/30 bg-gradient-to-b from-primary/5 to-card shadow-sm overflow-hidden transition-all duration-300 ${chatExpanded ? "fixed inset-4 z-50 shadow-2xl" : ""}`}
+              className={cn(
+                "flex flex-col rounded-xl border-2 border-primary/30 shadow-sm overflow-hidden transition-all duration-300",
+                chatExpanded
+                  ? "fixed inset-4 z-50 shadow-2xl bg-background"
+                  : "bg-card"
+              )}
               style={chatExpanded ? {} : { height: "calc(100vh - 440px)", minHeight: "300px" }}
             >
+              {/* Header */}
               <div className="flex items-center gap-3 px-4 py-3 border-b border-primary/15 bg-gradient-to-r from-primary/10 to-transparent shrink-0">
                 <NoorAvatar size={30} />
                 <div className="flex-1 min-w-0">
@@ -693,13 +723,14 @@ export default function VideoPlayer() {
                   size="icon"
                   className="h-7 w-7 shrink-0"
                   onClick={() => setChatExpanded(p => !p)}
-                  title={chatExpanded ? (lang === "ar" ? "تصغير" : "Collapse") : (lang === "ar" ? "توسيع" : "Expand")}
+                  title={chatExpanded ? (lang === "ar" ? "تصغير" : "Collapse") : (lang === "ar" ? "تكبير" : "Expand")}
                 >
                   {chatExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                 </Button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-muted/5">
+              {/* Messages — always solid background */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-background">
                 {freeChatHistory.map((msg, i) => (
                   <div key={i} className={cn("flex gap-2", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
                     {msg.role === "assistant" && <NoorAvatar size={22} />}
@@ -726,13 +757,14 @@ export default function VideoPlayer() {
                 <div ref={freeChatBottomRef} />
               </div>
 
-              <div className="p-2.5 border-t bg-card/50 shrink-0">
+              {/* Input — always solid background */}
+              <div className="p-2.5 border-t bg-card shrink-0">
                 <div className="flex gap-2">
                   <Textarea
                     placeholder={lang === "ar" ? "اسأل نُور أي سؤال..." : "Ask Noor anything..."}
                     value={freeChatMessage}
                     onChange={e => setFreeChatMessage(e.target.value)}
-                    className="min-h-[44px] max-h-[88px] resize-none text-xs leading-snug"
+                    className="min-h-[44px] max-h-[88px] resize-none text-xs leading-snug bg-background"
                     onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendFreeMessage(); } }}
                   />
                   <Button
