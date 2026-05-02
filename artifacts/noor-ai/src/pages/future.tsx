@@ -93,12 +93,15 @@ export default function FutureSimulator() {
   const isSubscribed = user?.subscribed || user?.role === "admin";
   const isAr = lang === "ar";
 
-  // Free trial: tracked in localStorage; non-subscribers get exactly one use
-  const [trialUsed, setTrialUsed] = useState(() => !!localStorage.getItem(TRIAL_KEY));
-  const [trialExpired, setTrialExpired] = useState(false);
+  // Primary source of truth: DB flag on the user object (persists across logout/login/devices).
+  // Secondary device-level guard: localStorage (catches anonymous refresh abuse).
+  const dbTrialUsed = !isSubscribed && !!user?.simulatorTrialUsed;
+  const [localTrialUsed, setLocalTrialUsed] = useState(() => !!localStorage.getItem(TRIAL_KEY));
+  const trialUsed = dbTrialUsed || localTrialUsed;
 
   const roadmapMutation = useGenerateCareerRoadmap();
   const [roadmap, setRoadmap] = useState<any>(null);
+  const [trialBlockedByServer, setTrialBlockedByServer] = useState(false);
 
   const [selectedInterest, setSelectedInterest] = useState<string>("");
   const [customInterest, setCustomInterest] = useState<string>("");
@@ -110,8 +113,8 @@ export default function FutureSimulator() {
 
   const interests = isAr ? arabicInterests : englishInterests;
 
-  // Hard block: non-subscriber who already used the trial
-  if (!isSubscribed && trialUsed && !roadmap) {
+  // Hard block: non-subscriber who already used the trial (DB or localStorage)
+  if (!isSubscribed && (trialUsed || trialBlockedByServer) && !roadmap) {
     return (
       <AppLayout>
         <div className="container mx-auto px-4 py-24 max-w-2xl text-center">
@@ -124,14 +127,14 @@ export default function FutureSimulator() {
             <h1 className="text-2xl font-bold mb-3">
               {isAr ? "لقد استخدمت تجربتك المجانية" : "You've Used Your Free Trial"}
             </h1>
-            <p className="text-muted-foreground mb-8 leading-relaxed">
+            <p className="text-muted-foreground mb-5 leading-relaxed">
               {isAr
-                ? "اشترك في نُور AI للوصول الكامل غير المحدود لمحاكي المستقبل وجميع الأدوات الذكية."
-                : "Subscribe to Noor AI for unlimited full access to the Future Simulator and all smart tools."}
+                ? "لقد استخدمت تجربتك المجانية مع محاكي المستقبل. اشترك في نُور AI للوصول الكامل غير المحدود وخرائط الطريق المهنية الكاملة."
+                : "You have used your free trial. Subscribe to Noor AI for unlimited access and full professional roadmaps."}
             </p>
-            <Button size="lg" asChild>
+            <Button size="lg" asChild className="min-w-[200px]">
               <Link href="/subscribe">
-                {isAr ? "اشترك وافتح المحاكي" : "Subscribe to Unlock"}
+                {isAr ? "اشترك وافتح المحاكي — 5$/شهر" : "Subscribe to Unlock — $5/mo"}
               </Link>
             </Button>
           </div>
@@ -143,12 +146,6 @@ export default function FutureSimulator() {
   const handleGenerate = () => {
     if (!selectedInterest || !currentGrade) return;
 
-    // Mark trial as used for non-subscribers
-    if (!isSubscribed) {
-      localStorage.setItem(TRIAL_KEY, "1");
-      setTrialUsed(true);
-    }
-
     const finalInterest = selectedInterest === "أخرى" ? (customInterest.trim() || "أخرى") : selectedInterest;
     const enrichedGoals = [
       goals,
@@ -158,7 +155,25 @@ export default function FutureSimulator() {
 
     roadmapMutation.mutate(
       { data: { interests: [finalInterest], currentGrade, goals: enrichedGoals } },
-      { onSuccess: (data) => setRoadmap(data) }
+      {
+        onSuccess: (data) => {
+          // Server marked trial as used in DB; mirror to localStorage as device-level guard
+          if (!isSubscribed) {
+            localStorage.setItem(TRIAL_KEY, "1");
+            setLocalTrialUsed(true);
+          }
+          setRoadmap(data);
+        },
+        onError: (err: any) => {
+          // Server rejected because trial was already used (DB check)
+          const msg = err?.response?.data?.error || err?.message || "";
+          if (msg === "trial_used") {
+            localStorage.setItem(TRIAL_KEY, "1");
+            setLocalTrialUsed(true);
+            setTrialBlockedByServer(true);
+          }
+        },
+      }
     );
   };
 

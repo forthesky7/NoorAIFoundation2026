@@ -24,7 +24,7 @@ router.post("/auth/register", async (req, res) => {
     const [user] = await db.insert(usersTable).values({ name, email, passwordHash, role: "student" }).returning();
     const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: "7d" });
     return res.status(201).json({
-      user: { id: user.id, name: user.name, email: user.email, role: user.role, subscribed: user.subscribed, createdAt: user.createdAt.toISOString() },
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, subscribed: user.subscribed, simulatorTrialUsed: user.simulatorTrialUsed, createdAt: user.createdAt.toISOString() },
       token,
     });
   } catch (err) {
@@ -50,7 +50,7 @@ router.post("/auth/login", async (req, res) => {
     }
     const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: "7d" });
     return res.json({
-      user: { id: user.id, name: user.name, email: user.email, role: user.role, subscribed: user.subscribed, createdAt: user.createdAt.toISOString() },
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, subscribed: user.subscribed, simulatorTrialUsed: user.simulatorTrialUsed, createdAt: user.createdAt.toISOString() },
       token,
     });
   } catch (err) {
@@ -71,7 +71,7 @@ router.get("/auth/me", async (req, res) => {
     const users = await db.select().from(usersTable).where(eq(usersTable.id, decoded.userId));
     if (users.length === 0) return res.status(401).json({ error: "User not found" });
     const user = users[0];
-    return res.json({ id: user.id, name: user.name, email: user.email, role: user.role, subscribed: user.subscribed, createdAt: user.createdAt.toISOString() });
+    return res.json({ id: user.id, name: user.name, email: user.email, role: user.role, subscribed: user.subscribed, simulatorTrialUsed: user.simulatorTrialUsed, createdAt: user.createdAt.toISOString() });
   } catch {
     return res.status(401).json({ error: "Invalid token" });
   }

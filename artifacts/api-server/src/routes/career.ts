@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { authMiddleware, type AuthRequest } from "../lib/auth";
 import { GenerateCareerRoadmapBody } from "@workspace/api-zod";
+import { db } from "@workspace/db";
+import { usersTable } from "@workspace/db/schema";
+import { eq } from "drizzle-orm";
 
 const router = Router();
 
@@ -8,6 +11,20 @@ router.post("/career/roadmap", authMiddleware, async (req: AuthRequest, res) => 
   try {
     const parsed = GenerateCareerRoadmapBody.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Invalid input" });
+
+    const userId = req.userId!;
+    const isAdmin = req.userRole === "admin";
+
+    // Fetch the user to check subscription and trial status
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+    if (!user) return res.status(401).json({ error: "User not found" });
+
+    const isSubscribed = user.subscribed || isAdmin;
+
+    // Non-subscribers who have already used their trial are blocked
+    if (!isSubscribed && user.simulatorTrialUsed) {
+      return res.status(403).json({ error: "trial_used" });
+    }
 
     const { interests, currentGrade, goals } = parsed.data;
     const goalsText = goals || "";
@@ -103,6 +120,13 @@ router.post("/career/roadmap", authMiddleware, async (req: AuthRequest, res) => 
         },
       ],
     };
+
+    // Mark trial as used for non-subscribers after successful generation
+    if (!isSubscribed) {
+      await db.update(usersTable)
+        .set({ simulatorTrialUsed: true })
+        .where(eq(usersTable.id, userId));
+    }
 
     return res.json(roadmap);
   } catch {

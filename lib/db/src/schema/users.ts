@@ -10,6 +10,7 @@ export const usersTable = pgTable("users", {
   role: text("role").notNull().default("student"),
   subscribed: boolean("subscribed").notNull().default(false),
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
+  simulatorTrialUsed: boolean("simulator_trial_used").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
