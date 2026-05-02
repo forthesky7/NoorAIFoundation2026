@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { videosTable, checkpointsTable } from "@workspace/db/schema";
-import { eq, count } from "drizzle-orm";
+import { eq, count, asc, sql } from "drizzle-orm";
 import { CreateVideoBody, ListVideosQueryParams, GetVideoParams, UpdateVideoBody, DeleteVideoParams, CreateCheckpointBody, GetVideoCheckpointsParams, CreateCheckpointParams } from "@workspace/api-zod";
 import { authMiddleware, adminMiddleware, type AuthRequest } from "../lib/auth";
 
@@ -10,7 +10,7 @@ const router = Router();
 router.get("/videos", authMiddleware, async (req: AuthRequest, res) => {
   try {
     const { subject, grade } = req.query as { subject?: string; grade?: string };
-    const videos = await db.select().from(videosTable);
+    const videos = await db.select().from(videosTable).orderBy(asc(videosTable.sortOrder), asc(videosTable.id));
     
     const checkpointCounts = await db.select({ videoId: checkpointsTable.videoId, cnt: count() }).from(checkpointsTable).groupBy(checkpointsTable.videoId);
     const countMap = new Map(checkpointCounts.map(c => [c.videoId, Number(c.cnt)]));
@@ -28,6 +28,7 @@ router.get("/videos", authMiddleware, async (req: AuthRequest, res) => {
       grade: v.grade,
       duration: v.duration,
       thumbnailUrl: v.thumbnailUrl || `https://img.youtube.com/vi/${v.youtubeId}/hqdefault.jpg`,
+      sortOrder: v.sortOrder,
       checkpointCount: countMap.get(v.id) || 0,
       createdAt: v.createdAt.toISOString(),
     })));
@@ -108,6 +109,36 @@ router.patch("/videos/:id/duration", authMiddleware, async (req: AuthRequest, re
       await db.update(videosTable).set({ duration }).where(eq(videosTable.id, id));
     }
     return res.json({ ok: true, duration });
+  } catch {
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.patch("/videos/:id/sort-order", authMiddleware, adminMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { direction } = req.body as { direction: "up" | "down" };
+    if (!["up", "down"].includes(direction)) return res.status(400).json({ error: "Invalid direction" });
+
+    const all = await db.select({ id: videosTable.id, sortOrder: videosTable.sortOrder, subject: videosTable.subject })
+      .from(videosTable).orderBy(asc(videosTable.sortOrder), asc(videosTable.id));
+
+    const current = all.find(v => v.id === id);
+    if (!current) return res.status(404).json({ error: "Video not found" });
+
+    const sameSubject = all.filter(v => v.subject === current.subject);
+    const idx = sameSubject.findIndex(v => v.id === id);
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sameSubject.length) return res.json({ ok: true });
+
+    const swapVideo = sameSubject[swapIdx];
+    const currentOrder = current.sortOrder || all.indexOf(current) + 1;
+    const swapOrder = swapVideo.sortOrder || all.indexOf(swapVideo) + 1;
+
+    await db.update(videosTable).set({ sortOrder: swapOrder }).where(eq(videosTable.id, id));
+    await db.update(videosTable).set({ sortOrder: currentOrder }).where(eq(videosTable.id, swapVideo.id));
+
+    return res.json({ ok: true });
   } catch {
     return res.status(500).json({ error: "Server error" });
   }

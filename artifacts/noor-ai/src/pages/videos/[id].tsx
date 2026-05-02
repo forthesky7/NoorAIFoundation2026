@@ -150,6 +150,12 @@ export default function VideoPlayer() {
   const [popupPhase, setPopupPhase] = useState<"simplify" | "question">("simplify");
   const [checkpointResults, setCheckpointResults] = useState<Record<number, CheckpointResult>>({});
 
+  // Socratic challenge: timer + rank
+  const cpTimerRef = useRef<any>(null);
+  const [cpElapsed, setCpElapsed] = useState(0);
+  const [cpSteps, setCpSteps] = useState(0);
+  const [cpRank, setCpRank] = useState<string | null>(null);
+
   const [chatMessage, setChatMessage] = useState("");
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
   const [isUnderstanding, setIsUnderstanding] = useState(false);
@@ -258,6 +264,18 @@ export default function VideoPlayer() {
     freeChatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [freeChatHistory]);
 
+  const computeRank = (steps: number, elapsed: number, lang: string): string => {
+    const isAr = lang === "ar";
+    if (steps <= 2 && elapsed <= 60) return isAr ? "🏆 عبقري" : "🏆 Genius";
+    if (steps <= 4 && elapsed <= 120) return isAr ? "🧠 مفكر" : "🧠 Thinker";
+    if (steps <= 7) return isAr ? "⭐ متحمس" : "⭐ Enthusiast";
+    return isAr ? "📚 مجتهد" : "📚 Diligent";
+  };
+
+  const stopCpTimer = useCallback(() => {
+    if (cpTimerRef.current) { clearInterval(cpTimerRef.current); cpTimerRef.current = null; }
+  }, []);
+
   const triggerCheckpoint = useCallback((cp: typeof autoCheckpoints[0]) => {
     setCurrentCheckpoint(cp);
     setPopupPhase("simplify");
@@ -266,7 +284,12 @@ export default function VideoPlayer() {
     setIsUnderstanding(false);
     setChatMessage("");
     setCheckpointExpanded(false);
-  }, []);
+    // Reset Socratic challenge stats
+    setCpElapsed(0);
+    setCpSteps(0);
+    setCpRank(null);
+    stopCpTimer();
+  }, [stopCpTimer]);
 
   const onPlayerStateChange = useCallback((event: any) => {
     if (event.data === window.YT.PlayerState.PLAYING) {
@@ -309,6 +332,10 @@ export default function VideoPlayer() {
         ? `🔔 **سؤال نُور لك:**\n\n${currentCheckpoint?.question}`
         : `🔔 **Noor's question for you:**\n\n${currentCheckpoint?.question}`,
     }]);
+    // Start Socratic challenge timer
+    stopCpTimer();
+    setCpElapsed(0);
+    cpTimerRef.current = setInterval(() => setCpElapsed(prev => prev + 1), 1000);
   };
 
   const handleSendAnswer = () => {
@@ -317,15 +344,20 @@ export default function VideoPlayer() {
     setChatMessage("");
     const updated = [...chatHistory, { role: "user" as const, content: userMsg }];
     setChatHistory(updated);
+    const newSteps = cpSteps + 1;
+    setCpSteps(newSteps);
     sendMessageMutation.mutate(
       { data: { message: userMsg, videoId, checkpointId: currentCheckpoint.id > 0 ? currentCheckpoint.id : undefined, history: updated, ...(video?.title ? { videoTitle: video.title } : {}) } as any },
       {
         onSuccess: (res) => {
           setChatHistory([...updated, { role: "assistant", content: res.reply }]);
           if (res.understood) {
+            stopCpTimer();
+            const rank = computeRank(newSteps, cpElapsed, lang);
+            setCpRank(rank);
             setIsUnderstanding(true);
             setCheckpointResults(prev => ({ ...prev, [currentCheckpoint.id]: "correct" }));
-            toast({ title: lang === "ar" ? "ممتاز! 🌟" : "Excellent! 🌟", description: lang === "ar" ? "أثبتت فهمك. المحطة أصبحت خضراء!" : "You demonstrated understanding!" });
+            toast({ title: lang === "ar" ? `ممتاز! ${rank} 🌟` : `Excellent! ${rank} 🌟`, description: lang === "ar" ? "أثبتت فهمك. المحطة أصبحت خضراء!" : "You demonstrated understanding!" });
           }
         },
         onError: () => setChatHistory([...updated, { role: "assistant", content: lang === "ar" ? "عذراً، حدث خطأ. أعد المحاولة." : "Sorry, an error occurred." }]),
@@ -334,6 +366,7 @@ export default function VideoPlayer() {
   };
 
   const handleResumeAfterCorrect = () => {
+    stopCpTimer();
     setShowCheckpointPopup(false);
     setCurrentCheckpoint(null);
     setCheckpointExpanded(false);
@@ -341,6 +374,7 @@ export default function VideoPlayer() {
   };
 
   const handleSkip = () => {
+    stopCpTimer();
     if (currentCheckpoint) {
       setCheckpointResults(prev => ({ ...prev, [currentCheckpoint.id]: "skipped" }));
     }
@@ -420,9 +454,30 @@ export default function VideoPlayer() {
                 <div className="font-bold text-base leading-tight">
                   {lang === "ar" ? "نُور AI — وقفة ذكية" : "Noor AI — Smart Pause"}
                 </div>
-                <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400 mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shrink-0" />
-                  {lang === "ar" ? "متصل ومستعد للمساعدة" : "Online & ready to help"}
+                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                  <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shrink-0" />
+                    {lang === "ar" ? "متصل" : "Online"}
+                  </div>
+                  {/* Timer — shown only in question phase */}
+                  {popupPhase === "question" && !cpRank && (
+                    <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded-full">
+                      <Clock className="h-3 w-3" />
+                      {Math.floor(cpElapsed / 60).toString().padStart(2, "0")}:{(cpElapsed % 60).toString().padStart(2, "0")}
+                    </div>
+                  )}
+                  {/* Rank badge — shown after correct answer */}
+                  {cpRank && (
+                    <div className="text-xs font-bold bg-gradient-to-r from-yellow-400/20 to-primary/20 text-primary border border-primary/25 px-2.5 py-0.5 rounded-full animate-in zoom-in-75 duration-300">
+                      {cpRank}
+                    </div>
+                  )}
+                  {/* Step counter */}
+                  {popupPhase === "question" && cpSteps > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      {lang === "ar" ? `${cpSteps} خطوات` : `${cpSteps} steps`}
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">

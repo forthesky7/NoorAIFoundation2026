@@ -1,0 +1,23 @@
+"Critical Content & Access Update (Safe Mode):
+
+Video Reordering: In the Physics category (فئة الفيزياء), move the video '02. [فيزياء] واضح: تصوير الحركة (أول ثانوي/ ف1) - حلقة 5' from its current position to be placed exactly between 'حلقة 4' and 'حلقة 6'. Do NOT delete or modify any other video data.
+
+Arabic Language Support: Update the Login/Registration logic to allow Arabic characters in the 'Password' field, in addition to English. This is to facilitate access for Gulf users."
+
+الأمر الثاني: المصيدة التقنية ونظام المشاركة (دون المساس بالدفع)
+"Viral Features Implementation (UI/Logic only - DO NOT touch Payment Gateway):
+
+Viral Share Cards: When the 'Future Simulator' finishes, generate a visual card (not just text) showing the Career Title, Noor AI Logo, and a motivational quote. Add a 'Share My Future' button that opens the mobile native share menu (TikTok, Snapchat, etc.) with the Noor AI URL watermark.
+
+Socratic Challenge: Add a timer and a 'Rank' display (e.g., Expert, Thinker) to the Socratic Method interface based on how fast or in how many steps the student reaches the answer. This is for students to record and share as a challenge.
+
+Leaderboard: Create a simple 'Leaderboard' page showing the most active students in the Socratic Challenge and Future Simulator to encourage competition."
+
+الأمر الثالث: نظام النمو والجذب (إضافات برمجية فقط)
+"Growth & Referral System (Additive features only - Keep existing Checkout safe):
+
+Referral/Coupon Logic: Add a field for 'Coupon Codes' in the checkout page. Create a system where students can generate a personal referral code to get rewards (like 1 month free) when others subscribe through them.
+
+Influencer Landing Page: Create a simple page at /influencers where content creators with +5000 followers can request VIP access. This page should not interfere with the main subscription flow.
+
+Group Discount UI: Add a visual option on the pricing page for 'Group Subscription' (5 students for $20) and 'Buddy Discount' (2 students for 20% off each), but ensure the backend link to the payment provider remains unchanged."

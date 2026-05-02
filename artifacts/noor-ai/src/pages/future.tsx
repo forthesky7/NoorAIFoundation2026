@@ -11,10 +11,24 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Loader2, Sparkles, GraduationCap, Briefcase, Trophy, Lock,
-  Download, BanknoteIcon, TrendingUp, Share2, Crown,
+  Download, BanknoteIcon, TrendingUp, Share2, Crown, X,
 } from "lucide-react";
+
+const MOTIVATIONAL_QUOTES_AR = [
+  "النجاح ليس نهاية الطريق، بل هو بداية رحلة أعظم.",
+  "كل خطوة نحو حلمك تجعلك أقرب مما تتخيل.",
+  "العقول العظيمة لم تُبنَ في يوم واحد — ابنِ نفسك كل يوم.",
+  "استثمارك في عقلك هو أعلى عائد ستحصل عليه في حياتك.",
+];
+const MOTIVATIONAL_QUOTES_EN = [
+  "Success is not the destination, it's the beginning of a greater journey.",
+  "Every step toward your dream brings you closer than you imagine.",
+  "Great minds aren't built in a day — build yourself every day.",
+  "Investing in your mind gives you the highest return you'll ever get.",
+];
 
 const TRIAL_KEY = "noor_future_trial_used";
 
@@ -110,6 +124,11 @@ export default function FutureSimulator() {
   const [livingStandard, setLivingStandard] = useState<string>("");
   const [goals, setGoals] = useState<string>("");
   const [shareSuccess, setShareSuccess] = useState(false);
+  const [showShareCard, setShowShareCard] = useState(false);
+
+  const motivationalQuote = isAr
+    ? MOTIVATIONAL_QUOTES_AR[Math.floor((roadmap?.title?.length || 0) % MOTIVATIONAL_QUOTES_AR.length)]
+    : MOTIVATIONAL_QUOTES_EN[Math.floor((roadmap?.title?.length || 0) % MOTIVATIONAL_QUOTES_EN.length)];
 
   const interests = isAr ? arabicInterests : englishInterests;
 
@@ -184,38 +203,22 @@ export default function FutureSimulator() {
 
   const handleShare = async () => {
     if (!roadmap) return;
-
     const title = roadmap.title || "";
-    const summary = roadmap.summary || "";
     const careers = (roadmap.topCareers as string[] | undefined)?.join("، ") || "";
     const salary = roadmap.financialProjection?.estimatedSalary || "";
     const jobTitle = roadmap.financialProjection?.jobTitle || "";
-
-    // Free users share only the steps they can see; subscribers share all
-    const sharedSteps: any[] = isSubscribed
-      ? (roadmap.steps || [])
-      : (roadmap.steps || []).slice(0, FREE_STEPS);
-
-    const stepsText = sharedSteps
-      .map((s: any, i: number) => `${i + 1}. ${s.title} (${s.duration})\n   ${s.description}`)
-      .join("\n");
-
-    const partialNote = !isSubscribed
-      ? (isAr
-          ? "\n\n[مسار جزئي — للمسار الكامل اشترك في نُور AI]"
-          : "\n\n[Partial path — subscribe to Noor AI for the full roadmap]")
-      : "";
+    const quote = motivationalQuote || "";
 
     const text = isAr
-      ? `🌟 مساري المهني من نُور AI\n\n📌 ${title}\n${summary}\n\n💼 المهن المُوصى بها: ${careers}\n💰 التوقع المالي: ${salary} — ${jobTitle}\n\n🗺️ خارطة الطريق:\n${stepsText}${partialNote}\n\n🔗 اكتشف مستقبلك على: ${window.location.origin}`
-      : `🌟 My Career Path from Noor AI\n\n📌 ${title}\n${summary}\n\n💼 Recommended Careers: ${careers}\n💰 Financial Projection: ${salary} — ${jobTitle}\n\n🗺️ Roadmap:\n${stepsText}${partialNote}\n\n🔗 Discover your future at: ${window.location.origin}`;
+      ? `🌟 مساري المهني من نُور AI\n\n✨ ${title}\n\n💼 المهن المُوصى بها: ${careers}\n💰 ${salary} — ${jobTitle}\n\n💬 "${quote}"\n\n🔗 اكتشف مستقبلك على: ${window.location.origin}`
+      : `🌟 My Career Path from Noor AI\n\n✨ ${title}\n\n💼 Recommended: ${careers}\n💰 ${salary} — ${jobTitle}\n\n💬 "${quote}"\n\n🔗 Discover your future at: ${window.location.origin}`;
 
     try {
       if (navigator.share) {
         await navigator.share({
           title: isAr ? "مساري المهني — نُور AI" : "My Career Path — Noor AI",
           text,
-          url: window.location.href,
+          url: window.location.origin,
         });
       } else {
         await navigator.clipboard.writeText(text);
@@ -504,16 +507,14 @@ export default function FutureSimulator() {
                 {isAr ? "↩ جرب مساراً آخر" : "↩ Try another path"}
               </Button>
 
-              {/* Share button — for all users */}
+              {/* Share button — opens visual share card */}
               <Button
                 variant="outline"
-                onClick={handleShare}
+                onClick={() => setShowShareCard(true)}
                 className="flex-1 gap-2 border-primary/30 text-primary hover:bg-primary/5"
               >
                 <Share2 className="h-4 w-4" />
-                {shareSuccess
-                  ? (isAr ? "✓ تم النسخ!" : "✓ Copied!")
-                  : (isAr ? "شارك مساري المهني" : "Share My Career Path")}
+                {isAr ? "شارك مستقبلي 🚀" : "Share My Future 🚀"}
               </Button>
 
               {isSubscribed && (
@@ -546,6 +547,80 @@ export default function FutureSimulator() {
           </div>
         )}
       </div>
+
+      {/* ─── Viral Share Card Dialog ─── */}
+      {roadmap && (
+        <Dialog open={showShareCard} onOpenChange={setShowShareCard}>
+          <DialogContent className="max-w-sm p-0 overflow-hidden" dir={isAr ? "rtl" : "ltr"}>
+            <DialogHeader className="sr-only">
+              <DialogTitle>{isAr ? "شارك مستقبلك" : "Share Your Future"}</DialogTitle>
+            </DialogHeader>
+
+            {/* The visual card */}
+            <div className="bg-gradient-to-br from-primary via-primary/90 to-violet-600 text-white p-6 relative overflow-hidden">
+              {/* Background decoration */}
+              <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white/5 -translate-y-8 translate-x-8" />
+              <div className="absolute bottom-0 left-0 w-24 h-24 rounded-full bg-white/5 translate-y-6 -translate-x-6" />
+
+              {/* Noor AI brand */}
+              <div className="flex items-center gap-2 mb-5 relative z-10">
+                <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-lg font-bold">ن</div>
+                <span className="text-sm font-bold tracking-wide opacity-90">NOOR AI</span>
+                <span className="ms-auto text-xs opacity-60">{isAr ? "محاكي المستقبل" : "Future Simulator"}</span>
+              </div>
+
+              {/* Career Title */}
+              <h2 className="text-2xl font-extrabold tracking-tight mb-2 relative z-10 leading-tight">
+                {roadmap.title}
+              </h2>
+
+              {/* Top careers */}
+              {roadmap.topCareers?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-4 relative z-10">
+                  {(roadmap.topCareers as string[]).slice(0, 3).map((c: string, i: number) => (
+                    <span key={i} className="text-xs bg-white/20 border border-white/30 px-2.5 py-1 rounded-full font-medium">
+                      {c}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Financial */}
+              {roadmap.financialProjection && (
+                <div className="bg-white/15 border border-white/20 rounded-xl p-3 mb-4 relative z-10">
+                  <p className="text-xs opacity-75 mb-0.5">{isAr ? "التوقع المالي (5 سنوات)" : "Financial Projection (5yr)"}</p>
+                  <p className="text-xl font-bold">{roadmap.financialProjection.estimatedSalary}</p>
+                  <p className="text-sm opacity-85">{roadmap.financialProjection.jobTitle}</p>
+                </div>
+              )}
+
+              {/* Quote */}
+              <blockquote className="text-sm opacity-90 italic border-s-2 border-white/40 ps-3 mb-5 relative z-10 leading-relaxed">
+                "{motivationalQuote}"
+              </blockquote>
+
+              {/* URL watermark */}
+              <p className="text-xs opacity-50 relative z-10">{window.location.hostname}</p>
+            </div>
+
+            {/* Action buttons */}
+            <div className="p-4 space-y-2 bg-background">
+              <Button
+                className="w-full gap-2"
+                onClick={handleShare}
+              >
+                <Share2 className="h-4 w-4" />
+                {shareSuccess
+                  ? (isAr ? "✓ تم النسخ للحافظة!" : "✓ Copied to clipboard!")
+                  : (isAr ? "شارك عبر TikTok / Snapchat / ..." : "Share via TikTok / Snapchat / ...")}
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                {isAr ? "📸 يمكنك أيضاً التقاط صورة شاشة للبطاقة ومشاركتها مباشرة" : "📸 You can also screenshot the card and share it directly"}
+              </p>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </AppLayout>
   );
 }

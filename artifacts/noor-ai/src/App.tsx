@@ -19,6 +19,8 @@ import AdminNoor from "@/pages/admin-noor/index";
 import Terms from "@/pages/terms";
 import Privacy from "@/pages/privacy";
 import Refund from "@/pages/refund";
+import Leaderboard from "@/pages/leaderboard";
+import Influencers from "@/pages/influencers";
 import NotFound from "@/pages/not-found";
 
 const OWNER_EMAIL = "forthesky7@gmail.com";
@@ -69,6 +71,9 @@ function Router() {
       <Route path="/subscribe"><ProtectedRoute component={Subscribe} /></Route>
       <Route path="/admin"><ProtectedRoute component={AdminPanel} adminOnly={true} /></Route>
       <Route path="/admin-noor"><ProtectedRoute component={AdminNoor} ownerOnly={true} /></Route>
+
+      <Route path="/leaderboard"><ProtectedRoute component={Leaderboard} /></Route>
+      <Route path="/influencers" component={Influencers} />
 
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />

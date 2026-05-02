@@ -2,7 +2,8 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ShieldCheck, Check, CreditCard, Bitcoin, Copy, Loader2, Zap, AlertCircle, CheckCircle2, Network } from "lucide-react";
+import { ShieldCheck, Check, CreditCard, Bitcoin, Copy, Loader2, Zap, AlertCircle, CheckCircle2, Network, Users, Gift, Tag, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { useCreateSubscription } from "@workspace/api-client-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +25,29 @@ export default function Subscribe() {
   const [activeMethod, setActiveMethod] = useState<PayMethod>("crypto");
   const [cryptoNetwork, setCryptoNetwork] = useState<CryptoNetwork>("trc20");
   const [copied, setCopied] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponStatus, setCouponStatus] = useState<null | "valid" | "invalid" | "loading">(null);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+
+  const handleValidateCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponStatus("loading");
+    try {
+      const res = await apiClient.post("/coupons/validate", { code: couponCode.trim() });
+      const data = await res.json();
+      if (res.ok && data.valid) {
+        setCouponStatus("valid");
+        setCouponDiscount(data.discountPercent || 0);
+        toast({ title: lang === "ar" ? "كود صالح! ✓" : "Valid coupon! ✓", description: data.message });
+      } else {
+        setCouponStatus("invalid");
+        setCouponDiscount(0);
+        toast({ title: data.error || (lang === "ar" ? "كود غير صالح" : "Invalid coupon"), variant: "destructive" });
+      }
+    } catch {
+      setCouponStatus("invalid");
+    }
+  };
 
   if (user?.subscribed || user?.role === "admin") {
     return <Redirect to="/dashboard" />;
@@ -136,6 +160,46 @@ export default function Subscribe() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Coupon Code Field */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium flex items-center gap-2">
+                  <Tag className="h-4 w-4 text-primary" />
+                  {lang === "ar" ? "لديك كود خصم أو كود إحالة؟" : "Have a discount or referral code?"}
+                </p>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      placeholder={lang === "ar" ? "أدخل الكود هنا" : "Enter code here"}
+                      value={couponCode}
+                      onChange={e => { setCouponCode(e.target.value.toUpperCase()); setCouponStatus(null); setCouponDiscount(0); }}
+                      dir="ltr"
+                      className={`font-mono pr-8 ${couponStatus === "valid" ? "border-green-500 bg-green-50 dark:bg-green-950/20" : couponStatus === "invalid" ? "border-red-400" : ""}`}
+                      onKeyDown={e => e.key === "Enter" && handleValidateCoupon()}
+                    />
+                    {couponStatus === "valid" && (
+                      <CheckCircle2 className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                    )}
+                    {couponStatus === "invalid" && (
+                      <X className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-red-400" />
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={handleValidateCoupon}
+                    disabled={!couponCode.trim() || couponStatus === "loading" || couponStatus === "valid"}
+                    className="shrink-0"
+                  >
+                    {couponStatus === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : (lang === "ar" ? "تحقق" : "Apply")}
+                  </Button>
+                </div>
+                {couponStatus === "valid" && couponDiscount > 0 && (
+                  <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1.5">
+                    <Gift className="h-3.5 w-3.5" />
+                    {lang === "ar" ? `🎉 خصم ${couponDiscount}% مطبّق على اشتراكك التالي!` : `🎉 ${couponDiscount}% discount applied to your subscription!`}
+                  </p>
+                )}
+              </div>
+
               {/* Method selector */}
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -227,6 +291,77 @@ export default function Subscribe() {
               )}
             </CardContent>
           </Card>
+        </div>
+      </div>
+
+      {/* ─── Group & Buddy Discount Section ─── */}
+      <div className="container mx-auto px-4 pb-10 max-w-4xl">
+        <div className="grid md:grid-cols-2 gap-4">
+          {/* Group discount */}
+          <div className="rounded-2xl border-2 border-dashed border-primary/25 bg-primary/3 p-6 text-center relative overflow-hidden">
+            <div className="absolute top-3 end-3">
+              <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                {lang === "ar" ? "قريباً" : "Coming soon"}
+              </span>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+              <Users className="h-6 w-6 text-primary" />
+            </div>
+            <h3 className="text-lg font-bold mb-1">
+              {lang === "ar" ? "اشتراك المجموعة" : "Group Subscription"}
+            </h3>
+            <p className="text-3xl font-extrabold text-primary mb-1">$20</p>
+            <p className="text-sm text-muted-foreground mb-3">
+              {lang === "ar" ? "لـ 5 طلاب — توفير 60% لكل فرد" : "For 5 students — 60% off per person"}
+            </p>
+            <ul className="text-sm text-start space-y-1.5">
+              {(lang === "ar"
+                ? ["وصول كامل لجميع الميزات لـ 5 أشخاص", "شهر واحد مشترك", "مناسب للمجموعات الدراسية"]
+                : ["Full access for 5 people", "1 shared month", "Ideal for study groups"]
+              ).map((f, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-muted-foreground mt-4">
+              {lang === "ar" ? "تواصل معنا عبر البريد: noorsupportteam@gmail.com" : "Contact us: noorsupportteam@gmail.com"}
+            </p>
+          </div>
+
+          {/* Buddy discount */}
+          <div className="rounded-2xl border-2 border-dashed border-violet-400/30 bg-violet-50/50 dark:bg-violet-950/10 p-6 text-center relative overflow-hidden">
+            <div className="absolute top-3 end-3">
+              <span className="text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-full font-medium">
+                {lang === "ar" ? "قريباً" : "Coming soon"}
+              </span>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mx-auto mb-3">
+              <Gift className="h-6 w-6 text-violet-600 dark:text-violet-400" />
+            </div>
+            <h3 className="text-lg font-bold mb-1">
+              {lang === "ar" ? "خصم الثنائي" : "Buddy Discount"}
+            </h3>
+            <p className="text-3xl font-extrabold text-violet-600 dark:text-violet-400 mb-1">20% <span className="text-base font-medium">{lang === "ar" ? "خصم" : "off"}</span></p>
+            <p className="text-sm text-muted-foreground mb-3">
+              {lang === "ar" ? "لكل طالب عند اشتراك صديقين معاً" : "For each student when 2 friends subscribe together"}
+            </p>
+            <ul className="text-sm text-start space-y-1.5">
+              {(lang === "ar"
+                ? ["اشترك أنت وصديق بسعر $4 لكل منكما", "استخدم كود الإحالة الخاص بك", "صالح مع أي طريقة دفع"]
+                : ["You and a friend subscribe for $4 each", "Use your personal referral code", "Valid with any payment method"]
+              ).map((f, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-violet-600 dark:text-violet-400 shrink-0 mt-0.5" />
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-muted-foreground mt-4">
+              {lang === "ar" ? "احصل على كودك من صفحة الملف الشخصي" : "Get your code from your profile page"}
+            </p>
+          </div>
         </div>
       </div>
 

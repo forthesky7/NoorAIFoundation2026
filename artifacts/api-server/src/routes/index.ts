@@ -9,6 +9,9 @@ import progressRouter from "./progress";
 import dashboardRouter from "./dashboard";
 import adminRouter from "./admin";
 import requestsRouter from "./requests";
+import leaderboardRouter from "./leaderboard";
+import couponsRouter from "./coupons";
+import influencerRouter from "./influencer";
 
 const router: IRouter = Router();
 
@@ -22,5 +25,8 @@ router.use(progressRouter);
 router.use(dashboardRouter);
 router.use(adminRouter);
 router.use(requestsRouter);
+router.use(leaderboardRouter);
+router.use(couponsRouter);
+router.use(influencerRouter);
 
 export default router;

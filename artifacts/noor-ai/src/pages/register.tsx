@@ -118,7 +118,7 @@ export default function Register() {
                           <Input
                             placeholder="••••••••"
                             type={showPassword ? "text" : "password"}
-                            dir="ltr"
+                            dir="auto"
                             autoComplete="new-password"
                             className="pl-10"
                             {...field}

@@ -17,7 +17,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import {
   PlayCircle, Users, CreditCard, Plus, Trash2, Link2, Upload,
-  CheckCircle2, AlertCircle, Search, UserCheck, Send, Settings, Tag, X, MessageSquare, Clock, KeyRound
+  CheckCircle2, AlertCircle, Search, UserCheck, Send, Settings, Tag, X, MessageSquare, Clock, KeyRound,
+  ArrowUp, ArrowDown
 } from "lucide-react";
 import { apiClient } from "@/lib/api";
 
@@ -67,6 +68,18 @@ export default function AdminNoor() {
   const [resetPasswordId, setResetPasswordId] = useState<number | null>(null);
   const [resetPasswordValue, setResetPasswordValue] = useState("");
   const [resettingId, setResettingId] = useState<number | null>(null);
+
+  // Video reorder
+  const [reorderingId, setReorderingId] = useState<number | null>(null);
+
+  const handleReorder = async (videoId: number, direction: "up" | "down") => {
+    setReorderingId(videoId);
+    try {
+      await apiClient.patch(`/videos/${videoId}/sort-order`, { direction });
+      queryClient.invalidateQueries({ queryKey: getListVideosQueryKey() });
+    } catch { /* ignore */ }
+    setReorderingId(null);
+  };
 
   // Student Requests
   const [requests, setRequests] = useState<LessonRequest[]>([]);
@@ -845,7 +858,7 @@ export default function AdminNoor() {
                 <tbody>
                   {videosLoading ? (
                     <tr><td colSpan={4} className="px-4 py-8 text-center"><Skeleton className="h-8 w-full max-w-md mx-auto" /></td></tr>
-                  ) : videos && videos.length > 0 ? videos.map(video => (
+                  ) : videos && videos.length > 0 ? videos.map((video, idx) => (
                     <tr key={video.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
                       <td className="px-4 py-3 font-medium max-w-[200px] truncate">{video.title}</td>
                       <td className="px-4 py-3">
@@ -855,9 +868,27 @@ export default function AdminNoor() {
                         <a href={`https://youtu.be/${video.youtubeId}`} target="_blank" rel="noopener noreferrer" className="hover:text-primary hover:underline">{video.youtubeId}</a>
                       </td>
                       <td className="px-4 py-3 text-end">
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(video.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                            onClick={() => handleReorder(video.id, "up")}
+                            disabled={reorderingId === video.id || idx === 0}
+                            title={lang === "ar" ? "تحريك لأعلى" : "Move up"}
+                          >
+                            <ArrowUp className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                            onClick={() => handleReorder(video.id, "down")}
+                            disabled={reorderingId === video.id || idx === videos.length - 1}
+                            title={lang === "ar" ? "تحريك لأسفل" : "Move down"}
+                          >
+                            <ArrowDown className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(video.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   )) : (

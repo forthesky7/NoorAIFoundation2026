@@ -117,7 +117,7 @@ export default function Login() {
                           <Input
                             placeholder="••••••••"
                             type={showPassword ? "text" : "password"}
-                            dir="ltr"
+                            dir="auto"
                             autoComplete="current-password"
                             className="pl-10"
                             {...field}
