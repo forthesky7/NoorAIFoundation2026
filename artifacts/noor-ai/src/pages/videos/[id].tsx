@@ -108,6 +108,14 @@ export default function VideoPlayer() {
 
   const isSubscribed = user?.subscribed || user?.role === "admin";
 
+  // Declare video + checkpoints FIRST so isFreeVideo can safely reference `video`
+  const { data: video, isLoading: videoLoading } = useGetVideo(videoId, {
+    query: { enabled: !!videoId, queryKey: getGetVideoQueryKey(videoId) }
+  });
+  const { data: checkpoints } = useGetVideoCheckpoints(videoId, {
+    query: { enabled: !!videoId && isSubscribed, queryKey: getGetVideoCheckpointsQueryKey(videoId) }
+  });
+
   // Free trial: fetch all videos to determine if this is the first of its category
   const { data: allVideos } = useListVideos(
     {},
@@ -150,12 +158,6 @@ export default function VideoPlayer() {
   const [freeChatHistory, setFreeChatHistory] = useState<Message[]>([]);
   const [chatExpanded, setChatExpanded] = useState(false);
 
-  const { data: video, isLoading: videoLoading } = useGetVideo(videoId, {
-    query: { enabled: !!videoId, queryKey: getGetVideoQueryKey(videoId) }
-  });
-  const { data: checkpoints } = useGetVideoCheckpoints(videoId, {
-    query: { enabled: !!videoId && isSubscribed, queryKey: getGetVideoCheckpointsQueryKey(videoId) }
-  });
   const sendMessageMutation = useSendChatMessage();
   const freeChatMutation = useSendChatMessage();
   const recordProgressMutation = useRecordProgress();

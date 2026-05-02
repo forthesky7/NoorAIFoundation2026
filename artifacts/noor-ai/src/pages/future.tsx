@@ -162,15 +162,46 @@ export default function FutureSimulator() {
     );
   };
 
+  // For non-subscribers, only show the first 2 steps; blur the rest
+  const FREE_STEPS = 2;
+
   const handlePrint = () => window.print();
 
   const handleShare = async () => {
-    const text = roadmap
-      ? `🌟 ${isAr ? "خارطة مستقبلي من نُور AI" : "My Future Roadmap from Noor AI"}\n${roadmap.title}\n${roadmap.summary}\n\n${isAr ? "اكتشف مستقبلك مع نُور AI!" : "Discover your future with Noor AI!"}`
+    if (!roadmap) return;
+
+    const title = roadmap.title || "";
+    const summary = roadmap.summary || "";
+    const careers = (roadmap.topCareers as string[] | undefined)?.join("، ") || "";
+    const salary = roadmap.financialProjection?.estimatedSalary || "";
+    const jobTitle = roadmap.financialProjection?.jobTitle || "";
+
+    // Free users share only the steps they can see; subscribers share all
+    const sharedSteps: any[] = isSubscribed
+      ? (roadmap.steps || [])
+      : (roadmap.steps || []).slice(0, FREE_STEPS);
+
+    const stepsText = sharedSteps
+      .map((s: any, i: number) => `${i + 1}. ${s.title} (${s.duration})\n   ${s.description}`)
+      .join("\n");
+
+    const partialNote = !isSubscribed
+      ? (isAr
+          ? "\n\n[مسار جزئي — للمسار الكامل اشترك في نُور AI]"
+          : "\n\n[Partial path — subscribe to Noor AI for the full roadmap]")
       : "";
+
+    const text = isAr
+      ? `🌟 مساري المهني من نُور AI\n\n📌 ${title}\n${summary}\n\n💼 المهن المُوصى بها: ${careers}\n💰 التوقع المالي: ${salary} — ${jobTitle}\n\n🗺️ خارطة الطريق:\n${stepsText}${partialNote}\n\n🔗 اكتشف مستقبلك على: ${window.location.origin}`
+      : `🌟 My Career Path from Noor AI\n\n📌 ${title}\n${summary}\n\n💼 Recommended Careers: ${careers}\n💰 Financial Projection: ${salary} — ${jobTitle}\n\n🗺️ Roadmap:\n${stepsText}${partialNote}\n\n🔗 Discover your future at: ${window.location.origin}`;
+
     try {
       if (navigator.share) {
-        await navigator.share({ title: "Noor AI — Future Simulator", text });
+        await navigator.share({
+          title: isAr ? "مساري المهني — نُور AI" : "My Career Path — Noor AI",
+          text,
+          url: window.location.href,
+        });
       } else {
         await navigator.clipboard.writeText(text);
         setShareSuccess(true);
@@ -179,9 +210,7 @@ export default function FutureSimulator() {
     } catch { /* user cancelled */ }
   };
 
-  // For non-subscribers, only show the first 2 steps; blur the rest
   const visibleSteps = roadmap?.steps ?? [];
-  const FREE_STEPS = 2;
 
   return (
     <AppLayout>
