@@ -261,6 +261,13 @@ body {
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  select:focus-visible {
+    outline-color: hsl(var(--ring));
+    outline-offset: 2px;
+  }
 }
 
 @layer utilities {
@@ -339,29 +346,39 @@ body {
 }
 
 @media print {
-  header,
-  nav,
-  .print-hide {
+  header, nav, .print-hide, button, a {
     display: none !important;
   }
   body {
     background: white !important;
-    color: black !important;
-    font-size: 12pt;
+    color: #111827 !important;
+    font-size: 11pt;
+    margin: 0;
+    padding: 0;
   }
   .container {
     max-width: 100% !important;
-    padding: 0 !important;
+    padding: 12pt 16pt !important;
   }
-  .shadow-sm,
-  .shadow-xl,
-  .shadow-2xl {
+  .shadow-sm, .shadow-xl, .shadow-2xl, .shadow {
     box-shadow: none !important;
   }
-  a[href]::after {
-    content: none !important;
+  [style*="filter"] {
+    filter: none !important;
   }
-  button {
-    display: none !important;
+  [style*="blur"] {
+    filter: none !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+  .border, .border-2 {
+    border-color: #e5e7eb !important;
+  }
+  .bg-gradient-to-br {
+    background: #eff6ff !important;
+  }
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }

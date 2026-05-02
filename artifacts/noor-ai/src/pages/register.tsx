@@ -34,6 +34,11 @@ export default function Register() {
   const registerMutation = useRegister();
   const { lang } = useLang();
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordDir, setPasswordDir] = useState<"ltr" | "rtl">("ltr");
+  const handlePasswordInput = (e: React.FormEvent<HTMLInputElement>) => {
+    const hasArabic = /[\u0600-\u06FF]/.test((e.target as HTMLInputElement).value);
+    setPasswordDir(hasArabic ? "rtl" : "ltr");
+  };
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -118,9 +123,10 @@ export default function Register() {
                           <Input
                             placeholder="••••••••"
                             type={showPassword ? "text" : "password"}
-                            dir="auto"
+                            dir={passwordDir}
                             autoComplete="new-password"
                             className="pl-10"
+                            onInput={handlePasswordInput}
                             {...field}
                           />
                           <button

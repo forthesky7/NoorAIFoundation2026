@@ -199,7 +199,105 @@ export default function FutureSimulator() {
   // For non-subscribers, only show the first 2 steps; blur the rest
   const FREE_STEPS = 2;
 
-  const handlePrint = () => window.print();
+  const handleExportPDF = () => {
+    const printArea = document.getElementById("roadmap-print-area");
+    if (!printArea) { window.print(); return; }
+
+    const pw = window.open("", "_blank", "width=960,height=800");
+    if (!pw) { window.print(); return; }
+
+    const date = new Date().toLocaleDateString(isAr ? "ar-SA" : "en-US", { year: "numeric", month: "long", day: "numeric" });
+    const title = roadmap?.title || (isAr ? "خارطة طريقي المهنية" : "My Career Roadmap");
+
+    pw.document.write(`<!DOCTYPE html>
+<html lang="${isAr ? "ar" : "en"}" dir="${isAr ? "rtl" : "ltr"}">
+<head>
+<meta charset="UTF-8">
+<title>${title}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: 'IBM Plex Sans Arabic', Arial, sans-serif; background: #fff; color: #111827; padding: 28px 32px; font-size: 11pt; line-height: 1.6; }
+  .brand { display: flex; align-items: center; gap: 10px; padding-bottom: 16px; border-bottom: 2px solid #e5e7eb; margin-bottom: 22px; }
+  .brand-icon { width: 40px; height: 40px; border-radius: 50%; background: #0ea5e9; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 18px; }
+  .brand-name { font-size: 16pt; font-weight: 800; color: #0ea5e9; }
+  .brand-date { margin-${isAr ? "right" : "left"}: auto; font-size: 9pt; color: #9ca3af; }
+  .roadmap-title { font-size: 20pt; font-weight: 800; color: #111827; margin-bottom: 8px; }
+  .roadmap-summary { font-size: 11pt; color: #4b5563; margin-bottom: 16px; line-height: 1.7; }
+  .careers { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+  .career-badge { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; border-radius: 20px; padding: 3px 12px; font-size: 9pt; font-weight: 600; }
+  .financial { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 14px; }
+  .financial-salary { font-size: 18pt; font-weight: 800; color: #15803d; }
+  .financial-title { font-size: 11pt; color: #166534; font-weight: 600; }
+  .financial-label { font-size: 9pt; color: #4b5563; }
+  .phase { border-radius: 10px; padding: 14px 18px; margin-bottom: 14px; page-break-inside: avoid; border: 1.5px solid #e5e7eb; }
+  .phase-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .phase-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13pt; color: #fff; flex-shrink: 0; }
+  .phase-title { font-size: 13pt; font-weight: 700; }
+  .phase-duration { background: #f3f4f6; color: #6b7280; border-radius: 12px; padding: 1px 8px; font-size: 8pt; font-weight: 600; }
+  .phase-desc { font-size: 10pt; color: #4b5563; margin-bottom: 8px; }
+  .milestones { list-style: none; }
+  .milestones li { display: flex; align-items: flex-start; gap: 8px; font-size: 10pt; margin-bottom: 4px; }
+  .milestone-num { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8pt; font-weight: 700; color: #fff; flex-shrink: 0; margin-top: 2px; }
+  .subjects { border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 14px 18px; margin-top: 14px; }
+  .subjects-title { font-size: 12pt; font-weight: 700; margin-bottom: 10px; }
+  .subject-badge { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 16px; padding: 4px 12px; font-size: 9pt; display: inline-block; margin: 3px; }
+  .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #e5e7eb; font-size: 8pt; color: #9ca3af; text-align: center; }
+  @media print { body { padding: 16px 20px; } }
+</style>
+</head>
+<body>
+<div class="brand">
+  <div class="brand-icon">ن</div>
+  <div class="brand-name">NOOR AI &mdash; ${isAr ? "محاكي المستقبل" : "Future Simulator"}</div>
+  <div class="brand-date">${date}</div>
+</div>
+
+<div class="roadmap-title">${title}</div>
+<div class="roadmap-summary">${roadmap?.summary || ""}</div>
+
+${roadmap?.topCareers?.length ? `<div class="careers">${(roadmap.topCareers as string[]).map((c: string) => `<span class="career-badge">${c}</span>`).join("")}</div>` : ""}
+
+${roadmap?.financialProjection ? `<div class="financial">
+  <div>
+    <div class="financial-label">${isAr ? "التوقع المالي خلال 5 سنوات" : "Financial Projection (5 Years)"}</div>
+    <div class="financial-salary">${roadmap.financialProjection.estimatedSalary}</div>
+    <div class="financial-title">${roadmap.financialProjection.jobTitle}</div>
+  </div>
+</div>` : ""}
+
+${(roadmap?.steps as any[] || []).map((step: any, i: number) => {
+  const colors = ["#3b82f6", "#8b5cf6", "#f59e0b", "#22c55e"];
+  const color = colors[i] || "#6b7280";
+  const icons = ["🎓", "✨", "💼", "🏆"];
+  return `<div class="phase" style="border-color:${color}33;background:${color}08">
+  <div class="phase-header">
+    <div class="phase-icon" style="background:${color}">${icons[i] || (i + 1)}</div>
+    <div>
+      <div class="phase-title">${step.title}</div>
+    </div>
+    <span class="phase-duration" style="margin-${isAr ? "right" : "left"}:auto">${step.duration || ""}</span>
+  </div>
+  <div class="phase-desc">${step.description || ""}</div>
+  <ul class="milestones">
+    ${(step.milestones as string[] || []).map((m: string, j: number) => `<li><div class="milestone-num" style="background:${color}">${j + 1}</div><span>${m}</span></li>`).join("")}
+  </ul>
+</div>`;
+}).join("")}
+
+${roadmap?.recommendedSubjects?.length ? `<div class="subjects">
+  <div class="subjects-title">📚 ${isAr ? "المواد المُوصى بها" : "Recommended Subjects"}</div>
+  <div>${(roadmap.recommendedSubjects as string[]).map((s: string) => `<span class="subject-badge">${s}</span>`).join("")}</div>
+</div>` : ""}
+
+<div class="footer">NOOR AI &bull; ${window.location.hostname} &bull; ${isAr ? "جميع الحقوق محفوظة" : "All rights reserved"}</div>
+
+<script>setTimeout(()=>{window.print();},600);</script>
+</body></html>`);
+    pw.document.close();
+  };
 
   const handleShare = async () => {
     if (!roadmap) return;
@@ -380,7 +478,7 @@ export default function FutureSimulator() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+          <div id="roadmap-print-area" className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
             {/* Roadmap Header */}
             <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-background shadow-sm">
               <CardContent className="p-8 text-center">
@@ -518,9 +616,9 @@ export default function FutureSimulator() {
               </Button>
 
               {isSubscribed && (
-                <Button onClick={handlePrint} className="flex-1 gap-2">
+                <Button onClick={handleExportPDF} className="flex-1 gap-2">
                   <Download className="h-4 w-4" />
-                  {isAr ? "حفظ / طباعة الخارطة" : "Save / Print Roadmap"}
+                  {isAr ? "تصدير كـ PDF" : "Export as PDF"}
                 </Button>
               )}
             </div>

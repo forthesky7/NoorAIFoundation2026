@@ -269,7 +269,7 @@ export default function Subscribe() {
                       {lang === "ar" ? "دفع فوري بالبطاقة" : "Instant Card Payment"}
                     </p>
                     <p className="text-sm text-muted-foreground mb-4">
-                      {lang === "ar" ? "ستتوفر قريباً." : "Coming soon."}
+                      {lang === "ar" ? "Visa · Mastercard · Apple Pay" : "Visa · Mastercard · Apple Pay"}
                     </p>
                     <Button
                       className="w-full h-12 text-base"
@@ -299,11 +299,6 @@ export default function Subscribe() {
         <div className="grid md:grid-cols-2 gap-4">
           {/* Group discount */}
           <div className="rounded-2xl border-2 border-dashed border-primary/25 bg-primary/3 p-6 text-center relative overflow-hidden">
-            <div className="absolute top-3 end-3">
-              <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
-                {lang === "ar" ? "قريباً" : "Coming soon"}
-              </span>
-            </div>
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
               <Users className="h-6 w-6 text-primary" />
             </div>
@@ -332,11 +327,6 @@ export default function Subscribe() {
 
           {/* Buddy discount */}
           <div className="rounded-2xl border-2 border-dashed border-violet-400/30 bg-violet-50/50 dark:bg-violet-950/10 p-6 text-center relative overflow-hidden">
-            <div className="absolute top-3 end-3">
-              <span className="text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-full font-medium">
-                {lang === "ar" ? "قريباً" : "Coming soon"}
-              </span>
-            </div>
             <div className="w-12 h-12 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mx-auto mb-3">
               <Gift className="h-6 w-6 text-violet-600 dark:text-violet-400" />
             </div>
