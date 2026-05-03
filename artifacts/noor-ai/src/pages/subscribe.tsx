@@ -1,6 +1,7 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ShieldCheck, Check, CreditCard, Bitcoin, Copy, Loader2, Zap, AlertCircle, CheckCircle2, Network, Users, Gift, Tag, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
