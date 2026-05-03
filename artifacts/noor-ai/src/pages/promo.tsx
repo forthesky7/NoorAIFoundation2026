@@ -98,7 +98,7 @@ export default function Promo() {
               </Link>
             </Button>
             <Button size="lg" variant="outline" className="h-13 px-10 text-base rounded-full border-sky-300 text-sky-700 hover:bg-sky-100 bg-white" asChild>
-              <Link href="/subscribe">{t.promoCtaPricing}</Link>
+              <Link href="/register">{t.promoCtaPricing}</Link>
             </Button>
           </div>
 
@@ -443,7 +443,7 @@ export default function Promo() {
               </Link>
             </Button>
             <Button size="lg" variant="outline" className="rounded-full px-10 h-13 text-base border-sky-300 text-sky-700 hover:bg-sky-100 bg-white" asChild>
-              <Link href="/subscribe">{t.promoFooterSecondary}</Link>
+              <Link href="/register">{t.promoFooterSecondary}</Link>
             </Button>
           </div>
         </div>
