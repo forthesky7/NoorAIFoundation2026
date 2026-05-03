@@ -36,3 +36,21 @@ id = "6mcYfCQi_sOTAvhwYG9Xj"
 uri = "file://screenshots/promo-top-v2.jpg"
 type = "image"
 title = "Full Page v2 — All 5 Sections"
+
+[[outputs]]
+id = "p7D8247fFlNDKTCLoRTjI"
+uri = "file://final-promo-1.png"
+type = "image"
+title = "محاكي المستقبل المهني"
+
+[[outputs]]
+id = "ZtG4As85cVqWKTgFV-r6T"
+uri = "file://final-socratic.png"
+type = "image"
+title = "المعلم السقراطي + التوقف الذكي"
+
+[[outputs]]
+id = "TaP3ShQ4E_y0XvwX48ugn"
+uri = "file://final-roadmap.png"
+type = "image"
+title = "خارطة طريق نُور AI 2026–2027"
