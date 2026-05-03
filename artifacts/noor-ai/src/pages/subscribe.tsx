@@ -9,7 +9,7 @@ import { useCreateSubscription } from "@workspace/api-client-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { Redirect } from "wouter";
+import { Redirect, Link } from "wouter";
 import { useLang } from "@/lib/language";
 import { apiClient } from "@/lib/api";
 
@@ -52,6 +52,81 @@ export default function Subscribe() {
 
   if (user?.subscribed || user?.role === "admin") {
     return <Redirect to="/dashboard" />;
+  }
+
+  // ── Guest view: show pricing card + CTA to register ──────────────────────
+  if (!user) {
+    const guestFeatures = lang === "ar" ? [
+      "جلسات معلم الذكاء الاصطناعي نُور بالأسلوب السقراطي",
+      "نقاط تحقق ذكية تلقائية في كل درس",
+      "وصول غير محدود لجميع الدروس",
+      "محاكي المستقبل مع توقعات مالية",
+      "تتبع التقدم والتحليلات",
+    ] : [
+      "Noor AI Socratic AI Tutor sessions",
+      "Smart auto-checkpoints in every lesson",
+      "Unlimited access to all lessons",
+      "Career Future Simulator with salary projections",
+      "Progress tracking & analytics",
+    ];
+    return (
+      <AppLayout>
+        <div className="container mx-auto px-4 py-20 max-w-3xl text-center">
+          <div className="inline-flex items-center gap-2 bg-sky-100 text-sky-700 border border-sky-200 rounded-full px-4 py-1.5 text-sm font-semibold mb-6">
+            <ShieldCheck className="h-4 w-4" />
+            {lang === "ar" ? "بدون التزام — إلغاء في أي وقت" : "No commitment — cancel anytime"}
+          </div>
+          <h1 className="text-4xl font-extrabold tracking-tight mb-3 text-slate-800">
+            {lang === "ar" ? "اشترك في نُور AI" : "Subscribe to NOOR AI"}
+          </h1>
+          <p className="text-xl text-slate-500 mb-10 max-w-xl mx-auto">
+            {lang === "ar"
+              ? "وصول غير محدود لجميع الميزات بـ 5$ شهرياً فقط."
+              : "Unlimited access to all features for just $5/month."}
+          </p>
+
+          <Card className="border-sky-200 shadow-lg max-w-md mx-auto mb-8">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-2xl text-slate-800">
+                {lang === "ar" ? "الخطة المميزة" : "Premium Plan"}
+              </CardTitle>
+              <div className="flex items-baseline gap-1 mt-2">
+                <span className="text-5xl font-extrabold tracking-tight text-sky-600">$5</span>
+                <span className="text-lg text-slate-400">/{lang === "ar" ? "شهر" : "mo"}</span>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-3 text-start mb-6">
+                {guestFeatures.map((f, i) => (
+                  <li key={i} className="flex items-start gap-3 text-sm text-slate-700">
+                    <Check className="h-4 w-4 text-sky-500 shrink-0 mt-0.5" />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex flex-col gap-3">
+                <Button size="lg" className="w-full h-12 text-base rounded-full bg-sky-600 hover:bg-sky-700 text-white" asChild>
+                  <Link href="/register">
+                    {lang === "ar" ? "إنشاء حساب مجاني والاشتراك" : "Create Free Account & Subscribe"}
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" className="w-full h-12 text-base rounded-full border-sky-300 text-sky-700 hover:bg-sky-50" asChild>
+                  <Link href="/login">
+                    {lang === "ar" ? "لديك حساب؟ سجّل الدخول" : "Already have an account? Log in"}
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <p className="text-xs text-slate-400">
+            {lang === "ar"
+              ? "ادفع بعد إنشاء الحساب — USDT أو بطاقة ائتمان"
+              : "Pay after creating your account — USDT or credit card"}
+          </p>
+        </div>
+      </AppLayout>
+    );
   }
 
   const handlePayment = (method: PayMethod) => {

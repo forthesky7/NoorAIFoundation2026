@@ -28,15 +28,20 @@ const OWNER_EMAIL = "forthesky7@gmail.com";
 
 const queryClient = new QueryClient();
 
+/**
+ * Root ("/"):
+ *  - Unauthenticated  → render Promo directly (sky-blue landing page, no URL bounce)
+ *  - Authenticated    → redirect to /dashboard
+ */
 function RootRoute() {
   const { isAuthenticated, isLoading } = useAuth();
   if (isLoading) {
     return <div className="flex-1 flex items-center justify-center min-h-screen">جاري التحميل...</div>;
   }
-  if (!isAuthenticated) {
-    return <Redirect to="/promo" />;
+  if (isAuthenticated) {
+    return <Redirect to="/dashboard" />;
   }
-  return <Home />;
+  return <Promo />;
 }
 
 function ProtectedRoute({
@@ -72,25 +77,33 @@ function ProtectedRoute({
 function Router() {
   return (
     <Switch>
+      {/* Root: Promo for guests, dashboard for authenticated users */}
       <Route path="/" component={RootRoute} />
+
+      {/* Public auth routes */}
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
 
+      {/* Public landing & info */}
+      <Route path="/promo" component={Promo} />
+      <Route path="/influencers" component={Influencers} />
+      <Route path="/terms" component={Terms} />
+      <Route path="/privacy" component={Privacy} />
+      <Route path="/refund" component={Refund} />
+
+      {/* Subscribe/pricing — PUBLIC so any visitor can see pricing & payment options */}
+      <Route path="/subscribe" component={Subscribe} />
+
+      {/* Protected — require login; pages handle their own free-vs-subscribed paywall UI */}
       <Route path="/dashboard"><ProtectedRoute component={Dashboard} /></Route>
       <Route path="/videos"><ProtectedRoute component={Videos} /></Route>
       <Route path="/videos/:id"><ProtectedRoute component={VideoPlayer} /></Route>
       <Route path="/future"><ProtectedRoute component={FutureSimulator} /></Route>
-      <Route path="/subscribe"><ProtectedRoute component={Subscribe} /></Route>
+      <Route path="/leaderboard"><ProtectedRoute component={Leaderboard} /></Route>
+
+      {/* Admin */}
       <Route path="/admin"><ProtectedRoute component={AdminPanel} adminOnly={true} /></Route>
       <Route path="/admin-noor"><ProtectedRoute component={AdminNoor} ownerOnly={true} /></Route>
-
-      <Route path="/leaderboard"><ProtectedRoute component={Leaderboard} /></Route>
-      <Route path="/influencers" component={Influencers} />
-      <Route path="/promo" component={Promo} />
-
-      <Route path="/terms" component={Terms} />
-      <Route path="/privacy" component={Privacy} />
-      <Route path="/refund" component={Refund} />
 
       <Route component={NotFound} />
     </Switch>

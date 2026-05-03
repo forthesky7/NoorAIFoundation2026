@@ -1,4 +1,4 @@
-const CACHE_NAME = 'noor-ai-v1';
+const CACHE_NAME = 'noor-ai-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
