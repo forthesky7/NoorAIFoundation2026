@@ -170,19 +170,19 @@ export default function Promo() {
       </section>
 
       {/* ─── SECTION: المعلم السقراطي ────────────────────────── */}
-      <section id="promo-socratic" className="w-full py-20 bg-gradient-to-b from-violet-50/60 to-background dark:from-violet-950/20 border-y border-violet-100 dark:border-violet-900/30">
+      <section id="promo-socratic" className="w-full py-20 bg-gradient-to-b from-teal-50/60 to-background dark:from-teal-950/20 border-y border-teal-100 dark:border-teal-900/30">
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="grid md:grid-cols-2 gap-12 items-center">
 
             {/* Text */}
             <div>
-              <div className="inline-flex items-center gap-2 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-full px-4 py-1.5 text-sm font-semibold mb-5">
+              <div className="inline-flex items-center gap-2 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded-full px-4 py-1.5 text-sm font-semibold mb-5">
                 <Brain className="h-4 w-4" />
                 المعلم السقراطي
               </div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-5 leading-snug">
                 نُور لا تعطيك الإجابة،{" "}
-                <span className="text-violet-600 dark:text-violet-400">بل تضيء لك الطريق</span>{" "}
+                <span className="text-teal-600 dark:text-teal-400">بل تضيء لك الطريق</span>{" "}
                 لتجدها بنفسك
               </h2>
               <p className="text-muted-foreground text-lg mb-7 leading-relaxed">
@@ -195,14 +195,14 @@ export default function Promo() {
                   "فهم حقيقي يدوم — لا حفظ يتبخّر بعد الاختبار",
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3 text-sm font-medium">
-                    <div className="h-7 w-7 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+                    <div className="h-7 w-7 rounded-full bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
                       <CheckCircle2 className="h-4 w-4" />
                     </div>
                     {item}
                   </li>
                 ))}
               </ul>
-              <Button className="rounded-full px-8 h-11 bg-violet-600 hover:bg-violet-700 text-white" asChild>
+              <Button className="rounded-full px-8 h-11 bg-teal-600 hover:bg-teal-700 text-white" asChild>
                 <Link href="/register">جرّب المعلم السقراطي</Link>
               </Button>
             </div>
@@ -212,10 +212,10 @@ export default function Promo() {
               <div className="relative w-full max-w-xs space-y-3">
                 {/* AI question bubble */}
                 <div className="flex items-start gap-3">
-                  <div className="h-9 w-9 rounded-full bg-violet-600 flex items-center justify-center shrink-0 shadow">
+                  <div className="h-9 w-9 rounded-full bg-teal-600 flex items-center justify-center shrink-0 shadow">
                     <Brain className="h-4 w-4 text-white" />
                   </div>
-                  <div className="bg-violet-100 dark:bg-violet-900/40 border border-violet-200 dark:border-violet-800 rounded-2xl rounded-ss-none px-4 py-3 text-sm font-medium text-violet-900 dark:text-violet-100 shadow-sm max-w-[220px]">
+                  <div className="bg-teal-100 dark:bg-teal-900/40 border border-teal-200 dark:border-teal-800 rounded-2xl rounded-ss-none px-4 py-3 text-sm font-medium text-teal-900 dark:text-teal-100 shadow-sm max-w-[220px]">
                     ما الذي يحدث للضغط عندما تزداد درجة الحرارة؟
                   </div>
                 </div>
@@ -230,10 +230,10 @@ export default function Promo() {
                 </div>
                 {/* AI guides */}
                 <div className="flex items-start gap-3">
-                  <div className="h-9 w-9 rounded-full bg-violet-600 flex items-center justify-center shrink-0 shadow">
+                  <div className="h-9 w-9 rounded-full bg-teal-600 flex items-center justify-center shrink-0 shadow">
                     <Brain className="h-4 w-4 text-white" />
                   </div>
-                  <div className="bg-violet-100 dark:bg-violet-900/40 border border-violet-200 dark:border-violet-800 rounded-2xl rounded-ss-none px-4 py-3 text-sm font-medium text-violet-900 dark:text-violet-100 shadow-sm max-w-[220px]">
+                  <div className="bg-teal-100 dark:bg-teal-900/40 border border-teal-200 dark:border-teal-800 rounded-2xl rounded-ss-none px-4 py-3 text-sm font-medium text-teal-900 dark:text-teal-100 shadow-sm max-w-[220px]">
                     ممتاز! لماذا تعتقد ذلك؟ فكّر في قانون الغازات..
                   </div>
                 </div>
@@ -247,8 +247,8 @@ export default function Promo() {
                   </div>
                 </div>
                 {/* Quote at bottom */}
-                <div className="mt-4 bg-violet-600/10 border border-violet-300/40 dark:border-violet-700/40 rounded-2xl px-4 py-3 text-center">
-                  <p className="text-xs font-semibold text-violet-700 dark:text-violet-300 leading-relaxed">
+                <div className="mt-4 bg-teal-600/10 border border-teal-300/40 dark:border-teal-700/40 rounded-2xl px-4 py-3 text-center">
+                  <p className="text-xs font-semibold text-teal-700 dark:text-teal-300 leading-relaxed">
                     "نُور تضيء لك الطريق لتجد الإجابة بنفسك"
                   </p>
                 </div>
@@ -259,7 +259,7 @@ export default function Promo() {
       </section>
 
       {/* ─── SECTION: التوقف الذكي ───────────────────────────── */}
-      <section id="promo-smartpause" className="w-full py-20 bg-background">
+      <section id="promo-smartpause" className="w-full py-20 bg-gradient-to-b from-sky-50/50 to-background dark:from-sky-950/15 border-y border-sky-100 dark:border-sky-900/30">
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="grid md:grid-cols-2 gap-12 items-center">
 
@@ -269,16 +269,16 @@ export default function Promo() {
                 {/* Video card */}
                 <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-lg">
                   {/* Fake video thumbnail */}
-                  <div className="relative bg-gradient-to-br from-primary/20 to-primary/5 h-40 flex items-center justify-center">
+                  <div className="relative bg-gradient-to-br from-sky-400/25 to-sky-400/5 h-40 flex items-center justify-center">
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="h-16 w-16 rounded-full bg-primary/90 flex items-center justify-center shadow-xl">
+                      <div className="h-16 w-16 rounded-full bg-sky-500/90 flex items-center justify-center shadow-xl">
                         <PauseCircle className="h-9 w-9 text-white" />
                       </div>
                     </div>
                     {/* Progress bar */}
                     <div className="absolute bottom-3 start-4 end-4">
                       <div className="h-1.5 bg-white/30 rounded-full overflow-hidden">
-                        <div className="h-full w-3/5 bg-primary rounded-full" />
+                        <div className="h-full w-3/5 bg-sky-400 rounded-full" />
                       </div>
                       <div className="flex justify-between mt-1">
                         <span className="text-white/70 text-xs">2:34</span>
@@ -286,7 +286,7 @@ export default function Promo() {
                       </div>
                     </div>
                     {/* PAUSED badge */}
-                    <div className="absolute top-3 end-3 bg-primary text-white text-xs font-bold px-2 py-1 rounded-full">
+                    <div className="absolute top-3 end-3 bg-sky-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                       توقف ذكي ⏸
                     </div>
                   </div>
@@ -298,7 +298,7 @@ export default function Promo() {
                     </p>
                     <div className="grid grid-cols-2 gap-2">
                       {["أجب بنعم / لا", "فكّر ثم تابع"].map((opt, i) => (
-                        <div key={i} className={`text-xs font-medium px-3 py-2 rounded-xl border text-center cursor-default ${i === 1 ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}>
+                        <div key={i} className={`text-xs font-medium px-3 py-2 rounded-xl border text-center cursor-default ${i === 1 ? "border-sky-500 bg-sky-500/10 text-sky-600 dark:text-sky-400" : "border-border text-muted-foreground"}`}>
                           {opt}
                         </div>
                       ))}
@@ -314,13 +314,13 @@ export default function Promo() {
 
             {/* Text */}
             <div>
-              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-4 py-1.5 text-sm font-semibold mb-5">
+              <div className="inline-flex items-center gap-2 bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 rounded-full px-4 py-1.5 text-sm font-semibold mb-5">
                 <PauseCircle className="h-4 w-4" />
                 التوقف الذكي
               </div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-5 leading-snug">
                 الفيديو يتوقف،{" "}
-                <span className="text-primary">ليسألك ويتفاعل معك</span>
+                <span className="text-sky-600 dark:text-sky-400">ليسألك ويتفاعل معك</span>
               </h2>
               <p className="text-muted-foreground text-lg mb-5 leading-relaxed">
                 التوقف الذكي: نُور تضمن استيعابك لكل معلومة — الفيديو يتوقف عند نقاط محورية ليتحقق من فهمك قبل المتابعة، لا مجرد مشاهدة سلبية.
@@ -332,14 +332,14 @@ export default function Promo() {
                   "الفيديو لا يكمل إلا بعد التحقق من الفهم الفعلي",
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3 text-sm font-medium">
-                    <div className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <div className="h-7 w-7 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
                       <CheckCircle2 className="h-4 w-4" />
                     </div>
                     {item}
                   </li>
                 ))}
               </ul>
-              <Button className="rounded-full px-8 h-11" asChild>
+              <Button className="rounded-full px-8 h-11 bg-sky-600 hover:bg-sky-700 text-white" asChild>
                 <Link href="/register">جرّب التوقف الذكي</Link>
               </Button>
             </div>
@@ -453,7 +453,7 @@ export default function Promo() {
       </section>
 
       {/* ─── FINAL CTA ────────────────────────────────────────── */}
-      <section id="promo-cta" className="w-full py-20 bg-primary text-primary-foreground">
+      <section id="promo-cta" className="w-full py-20 text-white" style={{ backgroundColor: "#1d2d44" }}>
         <div className="container mx-auto px-4 max-w-3xl text-center">
           <div className="inline-flex items-center gap-2 bg-white/15 rounded-full px-4 py-1.5 text-sm font-semibold mb-6">
             <CheckCircle2 className="h-4 w-4" />
@@ -462,16 +462,16 @@ export default function Promo() {
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-5">
             ابدأ اليوم — تجربة مجانية متاحة
           </h2>
-          <p className="text-primary-foreground/80 text-lg mb-8 max-w-xl mx-auto leading-relaxed">
+          <p className="text-white/75 text-lg mb-8 max-w-xl mx-auto leading-relaxed">
             انضم إلى آلاف الطلاب الذين يستخدمون نُور AI للاستعداد للقدرات والتحصيلي ومسارات الثانوية.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" className="rounded-full px-10 h-13 text-base font-semibold" asChild>
+            <Button size="lg" className="rounded-full px-10 h-13 text-base font-semibold bg-white text-[#1d2d44] hover:bg-white/90" asChild>
               <Link href="/register">
                 إنشاء حساب مجاني <ArrowLeft className="ms-2 h-5 w-5" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="rounded-full px-10 h-13 text-base border-white/30 text-primary-foreground hover:bg-white/10" asChild>
+            <Button size="lg" variant="outline" className="rounded-full px-10 h-13 text-base border-white/30 text-white hover:bg-white/10" asChild>
               <Link href="/subscribe">عرض الأسعار — 5$/شهر</Link>
             </Button>
           </div>
