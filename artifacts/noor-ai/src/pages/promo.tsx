@@ -6,65 +6,68 @@ import {
   CheckCircle2, Star, Zap, Shield, PlayCircle,
   GraduationCap, Brain, Trophy, MessageCircle, PauseCircle,
 } from "lucide-react";
-
-const STATS = [
-  { number: "مئات+", label: "درس تعليمي", sublabel: "والقادم أكثر.." },
-  { number: "4+", label: "مسارات تعليمية", sublabel: "مع إضافة المزيد مستقبلاً" },
-  { number: "5$", label: "فقط شهرياً", sublabel: "وصول كامل غير محدود" },
-];
-
-const CATEGORIES = [
-  {
-    icon: <Brain className="h-8 w-8" />,
-    title: "قدرات",
-    titleEn: "Qudurat",
-    desc: "دروس شاملة لاختبار القدرات العامة — لفظي وكمي — مع نقاط تحقق بالذكاء الاصطناعي تضمن الفهم الفعلي. والقادم أكثر..",
-    icon_bg: "bg-sky-100 text-sky-600",
-    count: "متنامٍ",
-  },
-  {
-    icon: <GraduationCap className="h-8 w-8" />,
-    title: "تجميعات تحصيلي",
-    titleEn: "Tahsili",
-    desc: "تجميعات وشرح معمّق لاختبار التحصيل الدراسي — علوم وأدبيات — بأسلوب الطريقة السقراطية. والقادم أكثر..",
-    icon_bg: "bg-cyan-100 text-cyan-600",
-    count: "متنامٍ",
-  },
-  {
-    icon: <BookOpen className="h-8 w-8" />,
-    title: "دروس مسارات ثانوي",
-    titleEn: "Secondary Tracks",
-    desc: "مسارات الثانوي الحالية — علمي وأدبي — معبّأة في دروس مركّزة وفعّالة، مع إضافة المزيد مستقبلاً.",
-    icon_bg: "bg-blue-100 text-blue-600",
-    count: "متنامٍ",
-  },
-  {
-    icon: <Lightbulb className="h-8 w-8" />,
-    title: "عام — نصائح ذهبية",
-    titleEn: "General / Tips",
-    desc: "مجموعة متجددة من النصائح الذهبية قبل الامتحانات — محتوى يُعدّك نفسياً وذهنياً لتتفوق يوم الاختبار.",
-    icon_bg: "bg-sky-100 text-sky-500",
-    count: "متجددة",
-  },
-];
-
-const TIPS = [
-  "ابدأ المراجعة قبل الامتحان بأسبوعين على الأقل",
-  "حلّ نماذج حقيقية من أسئلة السنوات الماضية",
-  "خصّص 20 دقيقة يومياً للمراجعة السريعة",
-  "استخدم تقنية بومودورو: 25 دقيقة تركيز + 5 راحة",
-  "نَم 8 ساعات قبل يوم الامتحان — الدماغ يحتاجها",
-  "اكتب ما تعلّمته بأسلوبك الخاص — يُرسّخه في الذاكرة",
-];
-
-const SIMULATOR_FEATURES = [
-  { icon: <Star className="h-4 w-4" />, text: "4 أسئلة فقط — نتيجة فورية ودقيقة" },
-  { icon: <Zap className="h-4 w-4" />, text: "توقعات مالية حقيقية للمهن المُوصى بها" },
-  { icon: <Trophy className="h-4 w-4" />, text: "خارطة طريق مفصّلة بمراحل واضحة" },
-  { icon: <Shield className="h-4 w-4" />, text: "تجربة مجانية مرة واحدة بدون اشتراك" },
-];
+import { useLang } from "@/lib/language";
 
 export default function Promo() {
+  const { t } = useLang();
+
+  const STATS = [
+    { number: "مئات+", label: t.promoStatLessons, sublabel: t.promoStatLessonsSub },
+    { number: "4+",    label: t.promoStatTracks,  sublabel: t.promoStatTracksSub },
+    { number: "5$",    label: t.promoStatPrice,   sublabel: t.promoStatPriceSub },
+  ];
+
+  const CATEGORIES = [
+    {
+      icon: <Brain className="h-8 w-8" />,
+      title: t.promoCatQuduratTitle,
+      titleEn: "Qudurat",
+      desc: t.promoCatQuduratDesc,
+      icon_bg: "bg-sky-100 text-sky-600",
+      count: t.promoCatCountGrowing,
+    },
+    {
+      icon: <GraduationCap className="h-8 w-8" />,
+      title: t.promoCatTahsiliTitle,
+      titleEn: "Tahsili",
+      desc: t.promoCatTahsiliDesc,
+      icon_bg: "bg-cyan-100 text-cyan-600",
+      count: t.promoCatCountGrowing,
+    },
+    {
+      icon: <BookOpen className="h-8 w-8" />,
+      title: t.promoCatSecondaryTitle,
+      titleEn: "Secondary Tracks",
+      desc: t.promoCatSecondaryDesc,
+      icon_bg: "bg-blue-100 text-blue-600",
+      count: t.promoCatCountGrowing,
+    },
+    {
+      icon: <Lightbulb className="h-8 w-8" />,
+      title: t.promoCatGeneralTitle,
+      titleEn: "General / Tips",
+      desc: t.promoCatGeneralDesc,
+      icon_bg: "bg-sky-100 text-sky-500",
+      count: t.promoCatCountRenewing,
+    },
+  ];
+
+  const TIPS = [
+    t.promoTip1,
+    t.promoTip2,
+    t.promoTip3,
+    t.promoTip4,
+    t.promoTip5,
+    t.promoTip6,
+  ];
+
+  const SIMULATOR_FEATURES = [
+    { icon: <Star className="h-4 w-4" />,   text: t.promoSimFeat1 },
+    { icon: <Zap className="h-4 w-4" />,    text: t.promoSimFeat2 },
+    { icon: <Trophy className="h-4 w-4" />, text: t.promoSimFeat3 },
+    { icon: <Shield className="h-4 w-4" />, text: t.promoSimFeat4 },
+  ];
+
   return (
     <AppLayout>
       {/* ─── HERO ─────────────────────────────────────────────── */}
@@ -75,30 +78,27 @@ export default function Promo() {
         <div className="container mx-auto px-4 py-24 md:py-36 text-center max-w-4xl relative">
           <div className="inline-flex items-center gap-2 bg-white border border-sky-200 text-sky-700 rounded-full px-4 py-1.5 text-sm font-semibold mb-8 shadow-sm">
             <span className="h-2 w-2 rounded-full bg-sky-500 animate-pulse" />
-            منصة تعليمية عربية متخصصة
+            {t.promoBadge}
           </div>
 
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-slate-800 mb-6 leading-tight text-balance">
-            منصة{" "}
-            <span className="text-sky-600">نُور AI</span>
+            <span className="text-sky-600">{t.promoH1}</span>
             <br className="hidden sm:block" />
-            دليلك الشامل للقدرات،{" "}
-            <span className="text-sky-600">التحصيلي</span>
-            ، ونظام المسارات
+            {t.promoH1Sub}
           </h1>
 
           <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed">
-            مئات الدروس التعليمية وأكثر + مدرّس ذكاء اصطناعي سقراطي + محاكي المستقبل المهني — كل ما تحتاجه في مكان واحد، بـ 5$ شهرياً فقط.
+            {t.promoHeroDesc}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button size="lg" className="h-13 px-10 text-base font-semibold rounded-full shadow-md bg-sky-600 hover:bg-sky-700 text-white" asChild>
               <Link href="/register">
-                ابدأ مجاناً الآن <ArrowLeft className="ms-2 h-5 w-5" />
+                {t.promoCtaStart} <ArrowLeft className="ms-2 h-5 w-5" />
               </Link>
             </Button>
             <Button size="lg" variant="outline" className="h-13 px-10 text-base rounded-full border-sky-300 text-sky-700 hover:bg-sky-100 bg-white" asChild>
-              <Link href="/subscribe">عرض الأسعار</Link>
+              <Link href="/subscribe">{t.promoCtaPricing}</Link>
             </Button>
           </div>
 
@@ -115,19 +115,19 @@ export default function Promo() {
         </div>
       </section>
 
-      {/* ─── SECTION A: مئات الدروس ───────────────────────────── */}
+      {/* ─── SECTION A: Courses Library ───────────────────────── */}
       <section id="promo-courses" className="w-full py-20 bg-sky-50">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="text-center mb-14">
             <div className="inline-flex items-center gap-2 bg-white border border-sky-200 text-sky-700 rounded-full px-4 py-1.5 text-sm font-semibold mb-4 shadow-sm">
               <PlayCircle className="h-4 w-4" />
-              المكتبة التعليمية
+              {t.promoCoursesBadge}
             </div>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4 text-slate-800">
-              مئات الدروس التعليمية وأكثر
+              {t.promoCoursesH2}
             </h2>
             <p className="text-slate-600 text-lg max-w-2xl mx-auto">
-              تغطية شاملة لكل ما تحتاجه — من القدرات والتحصيلي إلى مسارات الثانوية والنصائح الذهبية قبل الاختبار.
+              {t.promoCoursesDesc}
             </p>
           </div>
 
@@ -154,13 +154,13 @@ export default function Promo() {
 
           <div className="text-center mt-10">
             <Button variant="outline" className="rounded-full px-8 border-sky-300 text-sky-700 hover:bg-sky-100 bg-white" asChild>
-              <Link href="/register">تصفّح المكتبة كاملاً</Link>
+              <Link href="/register">{t.promoCoursesCta}</Link>
             </Button>
           </div>
         </div>
       </section>
 
-      {/* ─── SECTION: المعلم السقراطي ────────────────────────── */}
+      {/* ─── SECTION: Socratic Teacher ────────────────────────── */}
       <section id="promo-socratic" className="w-full py-20 bg-sky-50 border-t border-sky-100">
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -169,22 +169,18 @@ export default function Promo() {
             <div>
               <div className="inline-flex items-center gap-2 bg-white border border-sky-200 text-sky-700 rounded-full px-4 py-1.5 text-sm font-semibold mb-5 shadow-sm">
                 <Brain className="h-4 w-4" />
-                المعلم السقراطي
+                {t.promoSocraticBadge}
               </div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-5 leading-snug text-slate-800">
-                نُور لا تعطيك الإجابة،{" "}
-                <span className="text-sky-600">بل تضيء لك الطريق</span>{" "}
-                لتجدها بنفسك
+                {t.promoSocraticH2}{" "}
+                <span className="text-sky-600">{t.promoSocraticH2Span}</span>{" "}
+                {t.promoSocraticH2End}
               </h2>
               <p className="text-slate-600 text-lg mb-7 leading-relaxed">
-                بدلاً من تلقّي المعلومة جاهزة، يدفعك المعلم الذكي في نُور AI نحو التفكير النقدي — بأسئلة موجَّهة تقودك خطوةً بخطوة حتى تصل للإجابة بنفسك وتثبت في ذاكرتك إلى الأبد.
+                {t.promoSocraticDesc}
               </p>
               <ul className="space-y-3 mb-8">
-                {[
-                  "حوار تفاعلي يحاكي أفضل المعلمين الخصوصيين",
-                  "أسئلة موجَّهة بدلاً من إجابات جاهزة",
-                  "فهم حقيقي يدوم — لا حفظ يتبخّر بعد الاختبار",
-                ].map((item, i) => (
+                {[t.promoSocraticFeat1, t.promoSocraticFeat2, t.promoSocraticFeat3].map((item, i) => (
                   <li key={i} className="flex items-center gap-3 text-sm font-medium text-slate-700">
                     <div className="h-7 w-7 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
                       <CheckCircle2 className="h-4 w-4" />
@@ -194,53 +190,48 @@ export default function Promo() {
                 ))}
               </ul>
               <Button className="rounded-full px-8 h-11 bg-sky-600 hover:bg-sky-700 text-white" asChild>
-                <Link href="/register">جرّب المعلم السقراطي</Link>
+                <Link href="/register">{t.promoSocraticCta}</Link>
               </Button>
             </div>
 
             {/* Visual — dialogue bubbles */}
             <div className="flex items-center justify-center order-first md:order-last">
               <div className="relative w-full max-w-xs space-y-3">
-                {/* AI question bubble */}
                 <div className="flex items-start gap-3">
                   <div className="h-9 w-9 rounded-full bg-sky-600 flex items-center justify-center shrink-0 shadow">
                     <Brain className="h-4 w-4 text-white" />
                   </div>
                   <div className="bg-white border border-sky-200 rounded-2xl rounded-ss-none px-4 py-3 text-sm font-medium text-slate-700 shadow-sm max-w-[220px]">
-                    ما الذي يحدث للضغط عندما تزداد درجة الحرارة؟
+                    {t.promoSocraticQ1}
                   </div>
                 </div>
-                {/* Student thinking */}
                 <div className="flex items-start gap-3 justify-end">
                   <div className="bg-white border border-slate-200 rounded-2xl rounded-se-none px-4 py-3 text-sm text-slate-500 shadow-sm max-w-[200px]">
-                    أعتقد... يزداد؟ 🤔
+                    {t.promoSocraticA1}
                   </div>
                   <div className="h-9 w-9 rounded-full bg-sky-100 flex items-center justify-center shrink-0">
                     <span className="text-base">👨‍🎓</span>
                   </div>
                 </div>
-                {/* AI guides */}
                 <div className="flex items-start gap-3">
                   <div className="h-9 w-9 rounded-full bg-sky-600 flex items-center justify-center shrink-0 shadow">
                     <Brain className="h-4 w-4 text-white" />
                   </div>
                   <div className="bg-white border border-sky-200 rounded-2xl rounded-ss-none px-4 py-3 text-sm font-medium text-slate-700 shadow-sm max-w-[220px]">
-                    ممتاز! لماذا تعتقد ذلك؟ فكّر في قانون الغازات..
+                    {t.promoSocraticQ2}
                   </div>
                 </div>
-                {/* Student answer */}
                 <div className="flex items-start gap-3 justify-end">
                   <div className="bg-white border border-cyan-200 rounded-2xl rounded-se-none px-4 py-3 text-sm font-medium text-slate-700 shadow-sm max-w-[200px]">
-                    فهمت! P∝T عند ثبات الحجم ✅
+                    {t.promoSocraticA2}
                   </div>
                   <div className="h-9 w-9 rounded-full bg-sky-100 flex items-center justify-center shrink-0">
                     <span className="text-base">👨‍🎓</span>
                   </div>
                 </div>
-                {/* Quote at bottom */}
                 <div className="mt-4 bg-white border border-sky-200 rounded-2xl px-4 py-3 text-center shadow-sm">
                   <p className="text-xs font-semibold text-sky-700 leading-relaxed">
-                    "نُور تضيء لك الطريق لتجد الإجابة بنفسك"
+                    "{t.promoSocraticQuote}"
                   </p>
                 </div>
               </div>
@@ -249,7 +240,7 @@ export default function Promo() {
         </div>
       </section>
 
-      {/* ─── SECTION: التوقف الذكي ───────────────────────────── */}
+      {/* ─── SECTION: Smart Pause ─────────────────────────────── */}
       <section id="promo-smartpause" className="w-full py-20 bg-sky-50 border-t border-sky-100">
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -258,14 +249,12 @@ export default function Promo() {
             <div className="flex items-center justify-center">
               <div className="relative w-full max-w-xs">
                 <div className="bg-white border border-sky-100 rounded-2xl overflow-hidden shadow-lg">
-                  {/* Fake video thumbnail */}
                   <div className="relative bg-gradient-to-br from-sky-100 to-sky-50 h-40 flex items-center justify-center">
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="h-16 w-16 rounded-full bg-sky-600 flex items-center justify-center shadow-xl">
                         <PauseCircle className="h-9 w-9 text-white" />
                       </div>
                     </div>
-                    {/* Progress bar */}
                     <div className="absolute bottom-3 start-4 end-4">
                       <div className="h-1.5 bg-sky-200 rounded-full overflow-hidden">
                         <div className="h-full w-3/5 bg-sky-500 rounded-full" />
@@ -275,19 +264,17 @@ export default function Promo() {
                         <span className="text-sky-400 text-xs">4:12</span>
                       </div>
                     </div>
-                    {/* PAUSED badge */}
                     <div className="absolute top-3 end-3 bg-sky-600 text-white text-xs font-bold px-2 py-1 rounded-full">
-                      توقف ذكي ⏸
+                      {t.promoPauseBadgeText}
                     </div>
                   </div>
-                  {/* Question card */}
                   <div className="p-4 border-t border-sky-100">
-                    <p className="text-xs text-slate-400 mb-2 font-semibold uppercase tracking-wide">نُور تسألك:</p>
+                    <p className="text-xs text-slate-400 mb-2 font-semibold uppercase tracking-wide">{t.promoPauseLabel}</p>
                     <p className="text-sm font-semibold mb-3 leading-relaxed text-slate-700">
-                      ما الفرق بين الكمي اللفظي والكمي العددي في اختبار القدرات؟
+                      {t.promoPauseQuestion}
                     </p>
                     <div className="grid grid-cols-2 gap-2">
-                      {["أجب بنعم / لا", "فكّر ثم تابع"].map((opt, i) => (
+                      {[t.promoPauseOpt1, t.promoPauseOpt2].map((opt, i) => (
                         <div key={i} className={`text-xs font-medium px-3 py-2 rounded-xl border text-center cursor-default ${i === 1 ? "border-sky-400 bg-sky-50 text-sky-700" : "border-slate-200 text-slate-400"}`}>
                           {opt}
                         </div>
@@ -295,9 +282,8 @@ export default function Promo() {
                     </div>
                   </div>
                 </div>
-                {/* floating badge */}
                 <div className="absolute -bottom-4 -end-4 bg-sky-600 text-white text-xs font-bold px-3 py-2 rounded-2xl shadow-lg">
-                  ✓ تحقّق من الفهم
+                  {t.promoPauseCheck}
                 </div>
               </div>
             </div>
@@ -306,21 +292,17 @@ export default function Promo() {
             <div>
               <div className="inline-flex items-center gap-2 bg-white border border-sky-200 text-sky-700 rounded-full px-4 py-1.5 text-sm font-semibold mb-5 shadow-sm">
                 <PauseCircle className="h-4 w-4" />
-                التوقف الذكي
+                {t.promoPauseBadge}
               </div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-5 leading-snug text-slate-800">
-                الفيديو يتوقف،{" "}
-                <span className="text-sky-600">ليسألك ويتفاعل معك</span>
+                {t.promoPauseH2}{" "}
+                <span className="text-sky-600">{t.promoPauseH2Span}</span>
               </h2>
               <p className="text-slate-600 text-lg mb-5 leading-relaxed">
-                التوقف الذكي: نُور تضمن استيعابك لكل معلومة — الفيديو يتوقف عند نقاط محورية ليتحقق من فهمك قبل المتابعة، لا مجرد مشاهدة سلبية.
+                {t.promoPauseDesc}
               </p>
               <ul className="space-y-3 mb-8">
-                {[
-                  "توقف تلقائي عند كل نقطة تعليمية حاسمة",
-                  "سؤال فوري من المعلم الذكي يختبر استيعابك",
-                  "الفيديو لا يكمل إلا بعد التحقق من الفهم الفعلي",
-                ].map((item, i) => (
+                {[t.promoPauseFeat1, t.promoPauseFeat2, t.promoPauseFeat3].map((item, i) => (
                   <li key={i} className="flex items-center gap-3 text-sm font-medium text-slate-700">
                     <div className="h-7 w-7 rounded-full bg-cyan-100 text-cyan-600 flex items-center justify-center shrink-0">
                       <CheckCircle2 className="h-4 w-4" />
@@ -330,14 +312,14 @@ export default function Promo() {
                 ))}
               </ul>
               <Button className="rounded-full px-8 h-11 bg-sky-600 hover:bg-sky-700 text-white" asChild>
-                <Link href="/register">جرّب التوقف الذكي</Link>
+                <Link href="/register">{t.promoPauseCta}</Link>
               </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ─── SECTION B: محاكي المستقبل المهني ───────────────── */}
+      {/* ─── SECTION: Career Simulator ────────────────────────── */}
       <section id="promo-simulator" className="w-full py-20 bg-sky-50 border-t border-sky-100">
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -372,13 +354,13 @@ export default function Promo() {
             <div className="order-1 md:order-2">
               <div className="inline-flex items-center gap-2 bg-white border border-sky-200 text-sky-700 rounded-full px-4 py-1.5 text-sm font-semibold mb-5 shadow-sm">
                 <Compass className="h-4 w-4" />
-                مدعوم بالذكاء الاصطناعي
+                {t.promoSimBadge}
               </div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4 text-slate-800">
-                محاكي المستقبل المهني
+                {t.promoSimH2}
               </h2>
               <p className="text-slate-600 text-lg mb-7 leading-relaxed">
-                لطلاب الثانوي والجامعة — أجب على 4 أسئلة وسيرسم لك نُور AI خارطة طريق مهنية كاملة مع توقعات مالية حقيقية ومراحل عملية واضحة.
+                {t.promoSimDesc}
               </p>
               <ul className="space-y-3 mb-8">
                 {SIMULATOR_FEATURES.map((f, i) => (
@@ -391,26 +373,26 @@ export default function Promo() {
                 ))}
               </ul>
               <Button className="rounded-full px-8 h-11 bg-sky-600 hover:bg-sky-700 text-white" asChild>
-                <Link href="/register">جرّب المحاكي مجاناً</Link>
+                <Link href="/register">{t.promoSimCta}</Link>
               </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ─── SECTION C: نصائح ذهبية ──────────────────────────── */}
+      {/* ─── SECTION: Golden Tips ─────────────────────────────── */}
       <section id="promo-tips" className="w-full py-20 bg-sky-50 border-t border-sky-100">
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 bg-white border border-sky-200 text-sky-700 rounded-full px-4 py-1.5 text-sm font-semibold mb-4 shadow-sm">
               <Lightbulb className="h-4 w-4" />
-              فئة عام
+              {t.promoTipsBadge}
             </div>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4 text-slate-800">
-              نصائح ذهبية لما قبل الاختبار
+              {t.promoTipsH2}
             </h2>
             <p className="text-slate-600 text-lg max-w-2xl mx-auto">
-              في فئة <strong>عام</strong> تجد محتوى يُعدّك نفسياً وذهنياً — ليس فقط دراسياً — لتدخل الامتحان بأعلى مستوى من الاستعداد.
+              {t.promoTipsDesc}
             </p>
           </div>
 
@@ -432,12 +414,10 @@ export default function Promo() {
             <div className="h-12 w-12 rounded-full bg-sky-100 flex items-center justify-center mx-auto mb-4">
               <Lightbulb className="h-6 w-6 text-sky-600" />
             </div>
-            <h3 className="text-xl font-bold mb-2 text-slate-800">اشترك للوصول لمجموعتنا المتجددة من النصائح الذهبية في فئة عام</h3>
-            <p className="text-slate-500 mb-5 text-sm">
-              من إدارة الوقت داخل قاعة الاختبار، إلى تقنيات حل الأسئلة المُركّبة — كل شيء موثّق بفيديوهات قصيرة ومركّزة.
-            </p>
+            <h3 className="text-xl font-bold mb-2 text-slate-800">{t.promoTipsBoxTitle}</h3>
+            <p className="text-slate-500 mb-5 text-sm">{t.promoTipsBoxDesc}</p>
             <Button className="rounded-full px-8 bg-sky-600 hover:bg-sky-700 text-white" asChild>
-              <Link href="/register">ابدأ التجربة المجانية</Link>
+              <Link href="/register">{t.promoTipsCta}</Link>
             </Button>
           </div>
         </div>
@@ -448,22 +428,22 @@ export default function Promo() {
         <div className="container mx-auto px-4 max-w-3xl text-center">
           <div className="inline-flex items-center gap-2 bg-white border border-sky-200 text-sky-700 rounded-full px-4 py-1.5 text-sm font-semibold mb-6 shadow-sm">
             <CheckCircle2 className="h-4 w-4" />
-            بدون التزام — إلغاء في أي وقت
+            {t.promoFooterBadge}
           </div>
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-5 text-slate-800">
-            ابدأ اليوم — تجربة مجانية متاحة
+            {t.promoFooterH2}
           </h2>
           <p className="text-slate-600 text-lg mb-8 max-w-xl mx-auto leading-relaxed">
-            انضم إلى آلاف الطلاب الذين يستخدمون نُور AI للاستعداد للقدرات والتحصيلي ومسارات الثانوية.
+            {t.promoFooterDesc}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="rounded-full px-10 h-13 text-base font-semibold bg-sky-600 hover:bg-sky-700 text-white shadow-md" asChild>
               <Link href="/register">
-                إنشاء حساب مجاني <ArrowLeft className="ms-2 h-5 w-5" />
+                {t.promoFooterPrimary} <ArrowLeft className="ms-2 h-5 w-5" />
               </Link>
             </Button>
             <Button size="lg" variant="outline" className="rounded-full px-10 h-13 text-base border-sky-300 text-sky-700 hover:bg-sky-100 bg-white" asChild>
-              <Link href="/subscribe">عرض الأسعار — 5$/شهر</Link>
+              <Link href="/subscribe">{t.promoFooterSecondary}</Link>
             </Button>
           </div>
         </div>
