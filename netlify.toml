@@ -1,0 +1,4 @@
+[build]
+  base = "artifacts/mockup-sandbox"
+  command = "export PORT=5173 && export VITE_SKIP_TYPESCRIPT_CHECK=true && export BASE_PATH=/ && pnpm install && pnpm --filter \"@workspace/mockup-sandbox\" run build"
+  publish = "artifacts/mockup-sandbox/dist"
